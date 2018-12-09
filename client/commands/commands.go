@@ -24,5 +24,4 @@ func Init() {
 	if err := httputil.GetJson(resp, &mrConfig); err != nil {
 		log.Fatal("couldn't get MR config from master, error: " + err.Error())
 	}
-	log.Printf("got MR config from master %+v", mrConfig)
 }
