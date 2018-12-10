@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Croohand/mapreduce/common/httputil"
+	bolt "go.etcd.io/bbolt"
 )
 
 const maxTimeout = 100 * time.Millisecond
@@ -58,4 +59,30 @@ func getAvailableSlaves(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httputil.WriteJson(w, struct{ Slaves []string }{slaves})
+}
+
+func isFileExists(w http.ResponseWriter, r *http.Request) {
+	path := r.PostFormValue("Path")
+	if path == "" {
+		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
+	exists, failed := false, false
+	err := filesDB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("Files"))
+		if b != nil {
+			exists = b.Get([]byte(path)) != nil
+		} else {
+			http.Error(w, "bucket Files doesn't exist in DB", http.StatusInternalServerError)
+			failed = true
+		}
+		return nil
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		failed = true
+	}
+	if !failed {
+		httputil.WriteJson(w, struct{ Exists bool }{exists})
+	}
 }

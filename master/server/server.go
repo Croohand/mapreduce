@@ -48,6 +48,7 @@ func Run() {
 	http.HandleFunc("/Transaction/IsAlive", isAliveTransaction)
 	http.HandleFunc("/Transaction/Update", updateTransaction)
 	http.HandleFunc("/Transaction/ValidateWrite", validateWriteTransaction)
+	http.HandleFunc("/File/IsExists", isFileExists)
 
 	log.Printf("starting master server with config %+v", Config)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil); err != nil {

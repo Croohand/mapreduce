@@ -11,13 +11,23 @@ func main() {
 	commands.Init()
 
 	writeCommand := flag.NewFlagSet("write", flag.ExitOnError)
-	path := writeCommand.String("path", "", "MR path to write")
+	writePath := writeCommand.String("path", "", "MR path to write")
 
-	commandInfo := flagutil.CommandInfo{Name: "client", Subcommands: []*flag.FlagSet{writeCommand}}
+	readCommand := flag.NewFlagSet("read", flag.ExitOnError)
+	readPath := readCommand.String("path", "", "MR path to read")
+
+	existsCommand := flag.NewFlagSet("exists", flag.ExitOnError)
+	existsPath := existsCommand.String("path", "", "MR path to check")
+
+	commandInfo := flagutil.CommandInfo{Name: "client", Subcommands: []*flag.FlagSet{existsCommand, readCommand, writeCommand}}
 
 	flagutil.CheckArgs(commandInfo)
 	switch flagutil.Parse(commandInfo) {
 	case writeCommand:
-		commands.Write(*path)
+		commands.Write(*writePath)
+	case readCommand:
+		commands.Read(*readPath)
+	case existsCommand:
+		commands.Exists(*existsPath)
 	}
 }
