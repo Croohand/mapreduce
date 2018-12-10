@@ -97,7 +97,6 @@ func validateWriteTransaction(w http.ResponseWriter, r *http.Request) {
 	for _, block := range pathInfo {
 		available := 0
 		for _, slave := range block.Slaves {
-			log.Println(slave, isSlaveAvailable(slave))
 			if !isSlaveAvailable(slave) {
 				continue
 			}
@@ -194,7 +193,6 @@ func validateWriteTransaction(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return err
 		}
-		log.Println(blocks)
 		b.Put([]byte(path), []byte(blocks))
 		return nil
 	})

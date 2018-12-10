@@ -23,7 +23,7 @@ var mrConfig = struct {
 	BlockSize            int
 	ReplicationFactor    int
 	MinReplicationFactor int
-}{BlockSize: 1 << 20, ReplicationFactor: 3, MinReplicationFactor: 2}
+}{BlockSize: 1 << 24, ReplicationFactor: 3, MinReplicationFactor: 2}
 
 type MasterConfig struct {
 	Port       int
