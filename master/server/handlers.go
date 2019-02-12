@@ -3,15 +3,10 @@ package server
 import (
 	"math/rand"
 	"net/http"
-	"time"
 
 	"github.com/Croohand/mapreduce/common/httputil"
 	bolt "go.etcd.io/bbolt"
 )
-
-const maxTimeout = 100 * time.Millisecond
-
-var fastClient = http.Client{Timeout: time.Duration(maxTimeout)}
 
 func isAlive(w http.ResponseWriter, r *http.Request) {
 	httputil.WriteJson(w, struct {
@@ -25,16 +20,12 @@ func getMRConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func isSlaveAvailable(addr string) bool {
-	const maxAliveCheckRetries = 5
-	for i := 0; i < maxAliveCheckRetries; i++ {
-		resp, err := fastClient.Get(addr + "/IsAlive")
-		if err == nil {
-			var alive struct{ Alive bool }
-			if httputil.GetJson(resp, &alive) == nil && alive.Alive {
-				return true
-			}
+	resp, err := http.Get(addr + "/IsAlive")
+	if err == nil {
+		var alive struct{ Alive bool }
+		if httputil.GetJson(resp, &alive) == nil && alive.Alive {
+			return true
 		}
-		time.Sleep(time.Duration(maxTimeout))
 	}
 	return false
 }

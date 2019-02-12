@@ -89,7 +89,7 @@ func validateWriteTransaction(w http.ResponseWriter, r *http.Request) {
 		transactions.Remove(path)
 		for _, block := range pathInfo {
 			for _, slave := range block.Slaves {
-				fastClient.PostForm(slave+"/Transaction/Remove", url.Values{"TransactionId": []string{id}})
+				http.PostForm(slave+"/Transaction/Remove", url.Values{"TransactionId": []string{id}})
 			}
 		}
 	}()
@@ -100,22 +100,18 @@ func validateWriteTransaction(w http.ResponseWriter, r *http.Request) {
 			if !isSlaveAvailable(slave) {
 				continue
 			}
-			for i := 0; i < 5; i++ {
-				resp, err := fastClient.PostForm(slave+"/Block/IsExists", url.Values{"BlockId": []string{block.Id}, "TransactionId": []string{id}})
-				if err != nil {
-					log.Println("IsExists block error: " + err.Error())
-					continue
-				}
-				var exists struct{ Exists bool }
-				if err := httputil.GetJson(resp, &exists); err != nil {
-					log.Println("IsExists block error: " + err.Error())
-					continue
-				}
-				if exists.Exists {
-					available += 1
-					break
-				}
-				time.Sleep(maxTimeout)
+			resp, err := http.PostForm(slave+"/Block/IsExists", url.Values{"BlockId": []string{block.Id}, "TransactionId": []string{id}})
+			if err != nil {
+				log.Println("IsExists block error: " + err.Error())
+				continue
+			}
+			var exists struct{ Exists bool }
+			if err := httputil.GetJson(resp, &exists); err != nil {
+				log.Println("IsExists block error: " + err.Error())
+				continue
+			}
+			if exists.Exists {
+				available += 1
 			}
 		}
 		if available < mrConfig.MinReplicationFactor {
@@ -134,22 +130,18 @@ func validateWriteTransaction(w http.ResponseWriter, r *http.Request) {
 			if !isSlaveAvailable(slave) {
 				continue
 			}
-			for i := 0; i < 5; i++ {
-				resp, err := fastClient.PostForm(slave+"/Block/Validate", url.Values{"BlockId": []string{block.Id}, "TransactionId": []string{id}})
-				if err != nil {
-					log.Println("validate block error: " + err.Error())
-					continue
-				}
-				var success struct{ Success bool }
-				if err := httputil.GetJson(resp, &success); err != nil {
-					log.Println("validate block error: " + err.Error())
-					continue
-				}
-				if success.Success {
-					written += 1
-					break
-				}
-				time.Sleep(time.Second)
+			resp, err := http.PostForm(slave+"/Block/Validate", url.Values{"BlockId": []string{block.Id}, "TransactionId": []string{id}})
+			if err != nil {
+				log.Println("validate block error: " + err.Error())
+				continue
+			}
+			var success struct{ Success bool }
+			if err := httputil.GetJson(resp, &success); err != nil {
+				log.Println("validate block error: " + err.Error())
+				continue
+			}
+			if success.Success {
+				written += 1
 			}
 		}
 		if written < mrConfig.MinReplicationFactor {
@@ -164,20 +156,15 @@ func validateWriteTransaction(w http.ResponseWriter, r *http.Request) {
 				if !isSlaveAvailable(slave) {
 					continue
 				}
-				for i := 0; i < 5; i++ {
-					resp, err := fastClient.PostForm(slave+"/Block/Remove", url.Values{"BlockId": []string{block.Id}})
-					if err != nil {
-						log.Println("remove block error: " + err.Error())
-						continue
-					}
-					var success struct{ Success bool }
-					if err := httputil.GetJson(resp, &success); err != nil {
-						log.Println("remove block error: " + err.Error())
-						continue
-					}
-					if success.Success {
-						break
-					}
+				resp, err := http.PostForm(slave+"/Block/Remove", url.Values{"BlockId": []string{block.Id}})
+				if err != nil {
+					log.Println("remove block error: " + err.Error())
+					continue
+				}
+				var success struct{ Success bool }
+				if err := httputil.GetJson(resp, &success); err != nil {
+					log.Println("remove block error: " + err.Error())
+					continue
 				}
 			}
 		}
