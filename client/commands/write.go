@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"time"
 
 	"github.com/Croohand/mapreduce/common/blockutil"
 	"github.com/Croohand/mapreduce/common/httputil"
@@ -97,21 +96,13 @@ func Write(path string) {
 	lower, upper := 0, 0
 
 	trySendBlock := func() {
-		const maxSendBlockRetries = 5
-		for i := 0; i < maxSendBlockRetries; i++ {
-			block, err := sendBlock(txId, cur, path, lower, upper)
-			if err == nil {
-				blocks = append(blocks, *block)
-				lower = upper
-				cur.Reset()
-				break
-			}
-			log.Printf("send block try %d failed with error %s", i, err.Error())
-			if i == maxSendBlockRetries-1 {
-				log.Fatal("max send block tries exceeded")
-			}
-			time.Sleep(time.Duration(time.Second))
+		block, err := sendBlock(txId, cur, path, lower, upper)
+		if err != nil {
+			log.Fatal("send block failed with error %s", err.Error())
 		}
+		blocks = append(blocks, *block)
+		lower = upper
+		cur.Reset()
 	}
 
 	for scanner := bufio.NewScanner(os.Stdin); scanner.Scan(); {
