@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/Croohand/mapreduce/common/blockutil"
+	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/httputil"
 )
 
 func Exists(path string) bool {
-	if !blockutil.ValidateFilePath(path) {
+	if !fsutil.ValidateFilePath(path) {
 		log.Fatal("invalid file path " + path)
 	}
 	resp, err := http.PostForm(mrConfig.Host+"/File/IsExists", url.Values{"Path": []string{path}})

@@ -19,12 +19,6 @@ type Transaction struct {
 var transactions = cmap.New()
 var filesDB *bolt.DB
 
-var mrConfig = struct {
-	BlockSize            int
-	ReplicationFactor    int
-	MinReplicationFactor int
-}{BlockSize: 1 << 24, ReplicationFactor: 3, MinReplicationFactor: 2}
-
 type MasterConfig struct {
 	Port       int
 	Name       string
@@ -44,7 +38,7 @@ func Run() {
 
 	http.HandleFunc("/IsAlive", isAlive)
 	http.HandleFunc("/GetAvailableSlaves", getAvailableSlaves)
-	http.HandleFunc("/GetMRConfig", getMRConfig)
+	http.HandleFunc("/GetMrConfig", getMRConfig)
 	http.HandleFunc("/Transaction/IsAlive", isAliveTransaction)
 	http.HandleFunc("/Transaction/Update", updateTransaction)
 	http.HandleFunc("/Transaction/ValidateWrite", validateWriteTransaction)

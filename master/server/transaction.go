@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Croohand/mapreduce/common/blockutil"
+	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/httputil"
 	bolt "go.etcd.io/bbolt"
 )
@@ -20,7 +20,7 @@ func updateTransaction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "empty id or path in transaction check", http.StatusBadRequest)
 		return
 	}
-	if !blockutil.ValidateId(id) {
+	if !fsutil.ValidateTransactionId(id) {
 		http.Error(w, "invalid transaction id "+id, http.StatusBadRequest)
 		return
 	}
@@ -63,7 +63,7 @@ func isAliveTransaction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "empty id or path in transaction check", http.StatusBadRequest)
 		return
 	}
-	if !blockutil.ValidateId(id) {
+	if !fsutil.ValidateTransactionId(id) {
 		http.Error(w, "invalid transaction id "+id, http.StatusBadRequest)
 		return
 	}
@@ -72,15 +72,15 @@ func isAliveTransaction(w http.ResponseWriter, r *http.Request) {
 
 func validateWriteTransaction(w http.ResponseWriter, r *http.Request) {
 	id, path, blocks := r.PostFormValue("TransactionId"), r.PostFormValue("Path"), r.PostFormValue("PathInfo")
-	if !blockutil.ValidateId(id) {
+	if !fsutil.ValidateTransactionId(id) {
 		http.Error(w, "invalid transaction id "+id, http.StatusBadRequest)
 		return
 	}
-	if !blockutil.ValidateFilePath(path) {
+	if !fsutil.ValidateFilePath(path) {
 		http.Error(w, "invalid file path "+path, http.StatusBadRequest)
 		return
 	}
-	var pathInfo blockutil.PathInfo
+	var pathInfo fsutil.PathInfo
 	if err := json.Unmarshal([]byte(blocks), &pathInfo); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

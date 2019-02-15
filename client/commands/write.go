@@ -11,11 +11,11 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/Croohand/mapreduce/common/blockutil"
+	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/httputil"
 )
 
-func sendBlock(txId string, cur bytes.Buffer, path string, lower, upper int) (block *blockutil.BlockInfo, err error) {
+func sendBlock(txId string, cur bytes.Buffer, path string, lower, upper int) (block *fsutil.BlockInfo, err error) {
 	resp, err := http.Get(mrConfig.Host + "/GetAvailableSlaves")
 	if err != nil {
 		return
@@ -24,7 +24,7 @@ func sendBlock(txId string, cur bytes.Buffer, path string, lower, upper int) (bl
 	if err = httputil.GetJson(resp, &slaves); err != nil {
 		return
 	}
-	block = &blockutil.BlockInfo{Id: blockutil.GenerateId(), Lower: lower, Upper: upper, Slaves: slaves.Slaves}
+	block = &fsutil.BlockInfo{Id: fsutil.GenerateBlockId(), Lower: lower, Upper: upper, Slaves: slaves.Slaves}
 	var b bytes.Buffer
 
 	w := multipart.NewWriter(&b)
@@ -86,11 +86,11 @@ func sendBlock(txId string, cur bytes.Buffer, path string, lower, upper int) (bl
 }
 
 func Write(path string) {
-	if !blockutil.ValidateFilePath(path) {
+	if !fsutil.ValidateFilePath(path) {
 		log.Fatal("invalid file path " + path)
 	}
 	txId := startTransaction(path)
-	var blocks blockutil.PathInfo
+	var blocks fsutil.PathInfo
 	var cur bytes.Buffer
 
 	lower, upper := 0, 0

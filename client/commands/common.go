@@ -6,13 +6,13 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Croohand/mapreduce/common/blockutil"
+	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/httputil"
 )
 
 func startTransaction(path string) string {
 	started := make(chan bool, 1)
-	id := blockutil.GenerateId()
+	id := fsutil.GenerateBlockId()
 	go startTransactionInner(path, id, started)
 	<-started
 	return id

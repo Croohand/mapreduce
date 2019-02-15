@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Croohand/mapreduce/common/blockutil"
+	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/httputil"
 )
 
@@ -22,7 +22,7 @@ func removeTransactionInner(id string) error {
 
 func removeTransaction(w http.ResponseWriter, r *http.Request) {
 	id := r.PostFormValue("TransactionId")
-	if !blockutil.ValidateId(id) {
+	if !fsutil.ValidateTransactionId(id) {
 		http.Error(w, "invalid transaction id "+id, http.StatusBadRequest)
 		return
 	}

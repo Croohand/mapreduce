@@ -6,17 +6,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Croohand/mapreduce/common/blockutil"
+	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/httputil"
 )
 
 func checkBlock(w http.ResponseWriter, r *http.Request) {
 	id, transaction := r.PostFormValue("BlockId"), r.PostFormValue("TransactionId")
-	if !blockutil.ValidateId(id) {
+	if !fsutil.ValidateBlockId(id) {
 		http.Error(w, "invalid block id "+id, http.StatusBadRequest)
 		return
 	}
-	if transaction != "" && !blockutil.ValidateId(transaction) {
+	if transaction != "" && !fsutil.ValidateTransactionId(transaction) {
 		http.Error(w, "invalid transaction id "+transaction, http.StatusBadRequest)
 		return
 	}
@@ -30,11 +30,11 @@ func checkBlock(w http.ResponseWriter, r *http.Request) {
 
 func writeBlock(w http.ResponseWriter, r *http.Request) {
 	id, transaction, meta := r.PostFormValue("BlockId"), r.PostFormValue("TransactionId"), r.PostFormValue("Meta")
-	if !blockutil.ValidateId(id) {
+	if !fsutil.ValidateBlockId(id) {
 		http.Error(w, "invalid block id "+id, http.StatusBadRequest)
 		return
 	}
-	if !blockutil.ValidateId(transaction) {
+	if !fsutil.ValidateTransactionId(transaction) {
 		http.Error(w, "invalid transaction id "+transaction, http.StatusBadRequest)
 		return
 	}
@@ -88,11 +88,11 @@ func writeBlock(w http.ResponseWriter, r *http.Request) {
 
 func validateBlock(w http.ResponseWriter, r *http.Request) {
 	id, transaction := r.PostFormValue("BlockId"), r.PostFormValue("TransactionId")
-	if !blockutil.ValidateId(id) {
+	if !fsutil.ValidateBlockId(id) {
 		http.Error(w, "invalid block id "+id, http.StatusBadRequest)
 		return
 	}
-	if !blockutil.ValidateId(transaction) {
+	if !fsutil.ValidateTransactionId(transaction) {
 		http.Error(w, "invalid transaction id "+id, http.StatusBadRequest)
 		return
 	}
@@ -108,7 +108,7 @@ func validateBlock(w http.ResponseWriter, r *http.Request) {
 
 func removeBlock(w http.ResponseWriter, r *http.Request) {
 	id := r.PostFormValue("BlockId")
-	if !blockutil.ValidateId(id) {
+	if !fsutil.ValidateBlockId(id) {
 		http.Error(w, "invalid block id "+id, http.StatusBadRequest)
 		return
 	}
@@ -125,7 +125,7 @@ func removeBlock(w http.ResponseWriter, r *http.Request) {
 
 func readBlock(w http.ResponseWriter, r *http.Request) {
 	id := r.PostFormValue("BlockId")
-	if !blockutil.ValidateId(id) {
+	if !fsutil.ValidateBlockId(id) {
 		http.Error(w, "invalid block id "+id, http.StatusBadRequest)
 		return
 	}
