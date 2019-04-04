@@ -8,24 +8,25 @@ import (
 
 	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/httputil"
+	"github.com/Croohand/mapreduce/common/responses"
 )
 
 func Exists(path string) bool {
 	if !fsutil.ValidateFilePath(path) {
 		log.Fatal("invalid file path " + path)
 	}
-	resp, err := http.PostForm(mrConfig.Host+"/File/IsExists", url.Values{"Path": []string{path}})
+	resp, err := http.PostForm(mrConfig.Host+"/File/IsExists", url.Values{"Path": {path}})
 	if err != nil {
 		log.Fatal(err)
 	}
-	var exists struct{ Exists bool }
-	if err := httputil.GetJson(resp, &exists); err != nil {
+	var fStatus responses.FileStatus
+	if err := httputil.GetJson(resp, &fStatus); err != nil {
 		log.Fatal(err)
 	}
-	if exists.Exists {
+	if fStatus.Exists {
 		fmt.Printf("File %s exists\n", path)
 	} else {
 		fmt.Printf("File %s doesn't exist\n", path)
 	}
-	return exists.Exists
+	return fStatus.Exists
 }

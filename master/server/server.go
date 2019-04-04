@@ -36,13 +36,13 @@ func Run() {
 	}
 	defer filesDB.Close()
 
-	http.HandleFunc("/IsAlive", isAlive)
-	http.HandleFunc("/GetAvailableSlaves", getAvailableSlaves)
-	http.HandleFunc("/GetMrConfig", getMRConfig)
-	http.HandleFunc("/Transaction/IsAlive", isAliveTransaction)
-	http.HandleFunc("/Transaction/Update", updateTransaction)
-	http.HandleFunc("/Transaction/ValidateWrite", validateWriteTransaction)
-	http.HandleFunc("/File/IsExists", isFileExists)
+	http.HandleFunc("/IsAlive", isAliveHandler)
+	http.HandleFunc("/GetAvailableSlaves", getAvailableSlavesHandler)
+	http.HandleFunc("/GetMrConfig", getMrConfigHandler)
+	http.HandleFunc("/Transaction/IsAlive", isAliveTransactionHandler)
+	http.HandleFunc("/Transaction/Update", updateTransactionHandler)
+	http.HandleFunc("/Transaction/ValidateWrite", validateWriteTransactionHandler)
+	http.HandleFunc("/File/IsExists", isFileExistsHandler)
 
 	log.Printf("starting master server with config %+v", Config)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil); err != nil {

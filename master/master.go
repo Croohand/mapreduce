@@ -2,10 +2,12 @@ package main
 
 import (
 	"flag"
+	"log"
 	"strings"
 
 	"github.com/Croohand/mapreduce/common/flagutil"
 	"github.com/Croohand/mapreduce/common/osutil"
+	"github.com/Croohand/mapreduce/common/wrrors"
 	"github.com/Croohand/mapreduce/master/server"
 )
 
@@ -20,6 +22,8 @@ func main() {
 	flagutil.CheckArgs(commandInfo)
 	switch flagutil.Parse(commandInfo) {
 	case startCommand:
+		wrrors.SetSubject(*name)
+		log.SetFlags(log.LstdFlags | log.Lshortfile)
 		server.Config = server.MasterConfig{Name: *name, Port: *port, SlaveAddrs: strings.Split(*slaveAddrs, ",")}
 		osutil.Init(*name, *override, &server.Config)
 		if *name != server.Config.Name {

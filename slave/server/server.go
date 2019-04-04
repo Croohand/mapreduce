@@ -25,13 +25,13 @@ func Run() {
 		panic(err)
 	}
 
-	http.HandleFunc("/IsAlive", isAlive)
-	http.HandleFunc("/Block/IsExists", checkBlock)
-	http.HandleFunc("/Block/Write", writeBlock)
-	http.HandleFunc("/Block/Remove", removeBlock)
-	http.HandleFunc("/Block/Read", readBlock)
-	http.HandleFunc("/Block/Validate", validateBlock)
-	http.HandleFunc("/Transaction/Remove", removeTransaction)
+	http.HandleFunc("/IsAlive", isAliveHandler)
+	http.HandleFunc("/Block/IsExists", checkBlockHandler)
+	http.HandleFunc("/Block/Write", writeBlockHandler)
+	http.HandleFunc("/Block/Remove", removeBlockHandler)
+	http.HandleFunc("/Block/Read", readBlockHandler)
+	http.HandleFunc("/Block/Validate", validateBlockHandler)
+	http.HandleFunc("/Transaction/Remove", removeTransactionHandler)
 
 	log.Printf("starting cleaner on slave server")
 	go cleaner()

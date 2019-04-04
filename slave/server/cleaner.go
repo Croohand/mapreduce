@@ -12,18 +12,17 @@ import (
 	"time"
 
 	"github.com/Croohand/mapreduce/common/httputil"
+	"github.com/Croohand/mapreduce/common/responses"
+	"github.com/Croohand/mapreduce/common/wrrors"
 )
 
-func logError(err error) {
-	log.Println(Config.Name + " cleaner error: " + err.Error())
-}
-
 func cleaner() {
+	wrr := wrrors.New("cleaner")
 	for {
 		log.Println(Config.Name + " cleaner starting new iteration")
 		files, err := ioutil.ReadDir("transactions/")
 		if err != nil {
-			logError(err)
+			log.Println(wrr.Wrap(err))
 			continue
 		}
 		for _, f := range files {
@@ -31,33 +30,33 @@ func cleaner() {
 				id := f.Name()
 				metaFile, err := os.Open(filepath.Join("transactions", id, "meta"))
 				if err != nil {
-					logError(err)
+					log.Println(wrr.Wrap(err))
 					continue
 				}
 				defer metaFile.Close()
 				bytes, err := ioutil.ReadAll(metaFile)
 				if err != nil {
-					logError(err)
+					log.Println(wrr.Wrap(err))
 					continue
 				}
 				var meta struct{ Path string }
 				if err := json.Unmarshal(bytes, &meta); err != nil {
-					logError(err)
+					log.Println(wrr.Wrap(err))
 					continue
 				}
-				resp, err := http.PostForm(Config.MasterAddr+"/Transaction/IsAlive", url.Values{"Path": []string{meta.Path}, "TransactionId": []string{id}})
+				resp, err := http.PostForm(Config.MasterAddr+"/Transaction/IsAlive", url.Values{"Path": {meta.Path}, "TransactionId": {id}})
 				if err != nil {
-					logError(err)
+					log.Println(wrr.Wrap(err))
 					continue
 				}
-				var alive struct{ Alive bool }
-				if err := httputil.GetJson(resp, &alive); err != nil {
-					logError(err)
+				var txStatus responses.TransactionStatus
+				if err := httputil.GetJson(resp, &txStatus); err != nil {
+					log.Println(wrr.Wrap(err))
 					continue
 				}
-				if !alive.Alive {
-					if err := removeTransactionInner(id); err != nil {
-						logError(err)
+				if !txStatus.Alive {
+					if _, err := removeTransaction(id); err != nil {
+						log.Println(wrr.Wrap(err))
 					}
 				}
 			}

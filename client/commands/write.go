@@ -13,6 +13,7 @@ import (
 
 	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/httputil"
+	"github.com/Croohand/mapreduce/common/responses"
 )
 
 func sendBlock(txId string, cur bytes.Buffer, path string, lower, upper int) (block *fsutil.BlockInfo, err error) {
@@ -20,11 +21,11 @@ func sendBlock(txId string, cur bytes.Buffer, path string, lower, upper int) (bl
 	if err != nil {
 		return
 	}
-	var slaves struct{ Slaves []string }
+	var slaves []string
 	if err = httputil.GetJson(resp, &slaves); err != nil {
 		return
 	}
-	block = &fsutil.BlockInfo{Id: fsutil.GenerateBlockId(), Lower: lower, Upper: upper, Slaves: slaves.Slaves}
+	block = &fsutil.BlockInfo{Id: fsutil.GenerateBlockId(), Lower: lower, Upper: upper, Slaves: slaves}
 	var b bytes.Buffer
 
 	w := multipart.NewWriter(&b)
@@ -77,8 +78,8 @@ func sendBlock(txId string, cur bytes.Buffer, path string, lower, upper int) (bl
 		if err != nil {
 			return nil, err
 		}
-		var success struct{ Success bool }
-		if err := httputil.GetJson(resp, &success); err != nil {
+		var ans responses.Answer
+		if err := httputil.GetJson(resp, &ans); err != nil {
 			return nil, err
 		}
 	}
@@ -124,12 +125,12 @@ func Write(path string) {
 	if err != nil {
 		log.Fatal("failed to validate write transaction " + err.Error())
 	}
-	resp, err := http.PostForm(mrConfig.Host+"/Transaction/ValidateWrite", url.Values{"Path": []string{path}, "TransactionId": []string{txId}, "PathInfo": []string{string(b)}})
+	resp, err := http.PostForm(mrConfig.Host+"/Transaction/ValidateWrite", url.Values{"Path": {path}, "TransactionId": {txId}, "PathInfo": {string(b)}})
 	if err != nil {
 		log.Fatal("failed to validate write transaction " + err.Error())
 	}
-	var success struct{ Success bool }
-	if err := httputil.GetJson(resp, &success); err != nil {
+	var ans responses.Answer
+	if err := httputil.GetJson(resp, &ans); err != nil {
 		log.Fatal("failed to validate write transaction " + err.Error())
 	}
 }

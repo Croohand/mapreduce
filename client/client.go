@@ -2,12 +2,16 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"github.com/Croohand/mapreduce/client/commands"
 	"github.com/Croohand/mapreduce/common/flagutil"
+	"github.com/Croohand/mapreduce/common/wrrors"
 )
 
 func main() {
+	wrrors.SetSubject("client")
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	commands.Init()
 
 	writeCommand := flag.NewFlagSet("write", flag.ExitOnError)
