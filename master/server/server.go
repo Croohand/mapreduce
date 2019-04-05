@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Croohand/mapreduce/master/server/dbase"
 	cmap "github.com/orcaman/concurrent-map"
-	bolt "go.etcd.io/bbolt"
 )
 
 type Transaction struct {
@@ -17,7 +17,6 @@ type Transaction struct {
 }
 
 var transactions = cmap.New()
-var filesDB *bolt.DB
 
 type MasterConfig struct {
 	Port       int
@@ -29,12 +28,8 @@ var Config MasterConfig
 
 func Run() {
 	log.Println("opening bolt database")
-	var err error
-	filesDB, err = bolt.Open("files.db", 0600, nil)
-	if err != nil {
-		panic(err)
-	}
-	defer filesDB.Close()
+	dbase.Open()
+	defer dbase.Close()
 
 	http.HandleFunc("/IsAlive", isAliveHandler)
 	http.HandleFunc("/GetAvailableSlaves", getAvailableSlavesHandler)

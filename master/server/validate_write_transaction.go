@@ -9,7 +9,7 @@ import (
 	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/httputil"
 	"github.com/Croohand/mapreduce/common/responses"
-	bolt "go.etcd.io/bbolt"
+	"github.com/Croohand/mapreduce/master/server/dbase"
 )
 
 func validateWriteTransaction(id, path string, pathInfo fsutil.PathInfo, blocks []byte) (*responses.Answer, error) {
@@ -101,16 +101,9 @@ func validateWriteTransaction(id, path string, pathInfo fsutil.PathInfo, blocks 
 		return nil, errors.New("failed to validate write transaction, relevant slaves are down")
 	}
 
-	err := filesDB.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte("Files"))
-		if err != nil {
-			return err
-		}
-		b.Put([]byte(path), blocks)
-		return nil
-	})
+	err := dbase.Set("Files", path, blocks)
 	if err != nil {
-		return nil, errors.New("failed to write new path to DB")
+		return nil, errors.New("failed to write new path to DB: " + err.Error())
 	}
 	return &responses.Answer{true}, nil
 }
