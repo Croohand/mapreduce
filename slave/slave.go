@@ -12,10 +12,10 @@ import (
 
 func main() {
 	startCommand := flag.NewFlagSet("start", flag.ExitOnError)
-	port := startCommand.Int("port", 11001, "port for running master on")
-	name := startCommand.String("name", "slave", "name for slave machine and its folder")
-	masterAddr := startCommand.String("master", "", "master IP address")
-	override := startCommand.Bool("override", false, "override config.json")
+	port := startCommand.Int("port", 11001, "Port for running slave on")
+	name := startCommand.String("name", "slave", "Name for slave machine and its folder")
+	masterAddr := startCommand.String("master", "", "Master IP address")
+	override := startCommand.Bool("override", false, "Override config.json")
 	commandInfo := flagutil.CommandInfo{Name: "slave", Subcommands: []*flag.FlagSet{startCommand}}
 
 	flagutil.CheckArgs(commandInfo)
@@ -26,7 +26,7 @@ func main() {
 		server.Config = server.SlaveConfig{Name: *name, Port: *port, MasterAddr: *masterAddr}
 		osutil.Init(*name, *override, &server.Config)
 		if *name != server.Config.Name {
-			panic("name in config doesn't match with folder name")
+			panic("Name in config doesn't match with folder name")
 		}
 		server.Run()
 	}

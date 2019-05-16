@@ -11,11 +11,11 @@ import (
 const configName = "config.json"
 
 func Init(name string, override bool, config interface{}) {
-	log.Println("creating working directory for " + name)
+	log.Println("Creating working directory for " + name)
 
 	mrPath := os.Getenv("MR_PATH")
 	if mrPath == "" {
-		panic("set MR_PATH to specify file system data location")
+		panic("Set MR_PATH to specify file system data location")
 	}
 
 	workingDir := path.Join(mrPath, name)
@@ -29,18 +29,18 @@ func Init(name string, override bool, config interface{}) {
 
 	if !override {
 		if err := getConfig(config); err != nil {
-			log.Println("couldn't load " + configName + ", error: " + err.Error())
-			log.Println("config loaded from CLI arguments")
+			log.Println("Couldn't load " + configName + ", error: " + err.Error())
+			log.Println("Config loaded from CLI arguments")
 		} else {
-			log.Println("config loaded from " + configName)
+			log.Println("Config loaded from " + configName)
 		}
 	} else {
-		log.Println("config overriden from CLI arguments")
+		log.Println("Config overriden from CLI arguments")
 	}
 	if err := saveConfig(config); err != nil {
-		log.Println("couldn't save config to " + configName + ", error: " + err.Error())
+		log.Println("Couldn't save config to " + configName + ", error: " + err.Error())
 	} else {
-		log.Println("saved config to " + configName)
+		log.Println("Saved config to " + configName)
 	}
 }
 
@@ -62,7 +62,7 @@ func getConfig(config interface{}) error {
 }
 
 func saveConfig(config interface{}) error {
-	file, err := os.OpenFile(configName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+	file, err := os.Create(configName)
 	if err != nil {
 		return err
 	}

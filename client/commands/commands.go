@@ -18,9 +18,9 @@ func Init() {
 	mrConfig.Host = os.Getenv("MR_HOST")
 	resp, err := http.Get(mrConfig.Host + "/GetMrConfig")
 	if err != nil {
-		log.Fatal("couldn't get MR config from master, error: " + err.Error())
+		log.Panic("Couldn't get MR config from master, error: " + err.Error())
 	}
 	if err := httputil.GetJson(resp, &mrConfig); err != nil {
-		log.Fatal("couldn't get MR config from master, error: " + err.Error())
+		log.Panic("Couldn't get MR config from master, error: " + err.Error())
 	}
 }

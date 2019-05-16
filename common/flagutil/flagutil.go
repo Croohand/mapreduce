@@ -10,6 +10,7 @@ import (
 type CommandInfo struct {
 	Name        string
 	Subcommands []*flag.FlagSet
+	Aliases     map[string]string
 }
 
 func usage(info CommandInfo) {
@@ -30,7 +31,11 @@ func usage(info CommandInfo) {
 
 func Parse(info CommandInfo) *flag.FlagSet {
 	for _, com := range info.Subcommands {
-		if os.Args[1] == com.Name() {
+		name, alias := info.Aliases[os.Args[1]]
+		if !alias {
+			name = os.Args[1]
+		}
+		if name == com.Name() {
 			com.Parse(os.Args[2:])
 			return com
 		}

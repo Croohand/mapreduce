@@ -11,22 +11,25 @@ import (
 	"github.com/Croohand/mapreduce/common/responses"
 )
 
-func Exists(path string) bool {
+func existsInner(path string) bool {
 	if !fsutil.ValidateFilePath(path) {
-		log.Fatal("invalid file path " + path)
+		log.Panic("Invalid file path " + path)
 	}
 	resp, err := http.PostForm(mrConfig.Host+"/File/IsExists", url.Values{"Path": {path}})
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	var fStatus responses.FileStatus
 	if err := httputil.GetJson(resp, &fStatus); err != nil {
-		log.Fatal(err)
-	}
-	if fStatus.Exists {
-		fmt.Printf("File %s exists\n", path)
-	} else {
-		fmt.Printf("File %s doesn't exist\n", path)
+		log.Panic(err)
 	}
 	return fStatus.Exists
+}
+
+func Exists(path string) {
+	if existsInner(path) {
+		fmt.Printf("File path %s exists\n", path)
+	} else {
+		fmt.Printf("File path %s doesn't exist\n", path)
+	}
 }

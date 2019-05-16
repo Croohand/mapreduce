@@ -10,70 +10,85 @@ import (
 
 func checkBlockHandler(w http.ResponseWriter, r *http.Request) {
 	wrr := wrrors.New("checkBlockHandler")
-	id, transaction := r.PostFormValue("BlockId"), r.PostFormValue("TransactionId")
+	id, txId := r.PostFormValue("BlockId"), r.PostFormValue("TransactionId")
 	if !fsutil.ValidateBlockId(id) {
-		http.Error(w, wrr.SWrap("invalid block id "+id), http.StatusBadRequest)
+		http.Error(w, wrr.SWrap("Invalid block id "+id), http.StatusBadRequest)
 		return
 	}
-	if transaction != "" && !fsutil.ValidateTransactionId(transaction) {
-		http.Error(w, wrr.SWrap("invalid transaction id "+transaction), http.StatusBadRequest)
+	if !fsutil.ValidateTransactionId(txId) {
+		http.Error(w, wrr.SWrap("Invalid transaction id "+txId), http.StatusBadRequest)
 		return
 	}
-	httputil.WriteResponse(w, checkBlock(id, transaction), nil)
+	httputil.WriteResponse(w, checkBlock(id, txId), nil)
 }
 
 func writeBlockHandler(w http.ResponseWriter, r *http.Request) {
 	wrr := wrrors.New("writeBlockHandler")
-	id, transaction, meta := r.PostFormValue("BlockId"), r.PostFormValue("TransactionId"), r.PostFormValue("Meta")
+	id, txId := r.PostFormValue("BlockId"), r.PostFormValue("TransactionId")
 	if !fsutil.ValidateBlockId(id) {
-		http.Error(w, wrr.SWrap("invalid block id "+id), http.StatusBadRequest)
+		http.Error(w, wrr.SWrap("Invalid block id "+id), http.StatusBadRequest)
 		return
 	}
-	if !fsutil.ValidateTransactionId(transaction) {
-		http.Error(w, wrr.SWrap("invalid transaction id "+transaction), http.StatusBadRequest)
+	if !fsutil.ValidateTransactionId(txId) {
+		http.Error(w, wrr.SWrap("Invalid transaction id "+txId), http.StatusBadRequest)
 		return
 	}
-	file, _, err := r.FormFile("File")
+	file, _, err := r.FormFile("Block")
 	if err != nil {
 		http.Error(w, wrr.Wrap(err).Error(), http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
-	resp, err := writeBlock(id, transaction, meta, file)
-	httputil.WriteResponse(w, resp, wrr.Wrap(err))
+	err = writeBlock(id, txId, file)
+	httputil.WriteResponse(w, nil, wrr.Wrap(err))
+}
+
+func copyBlockHandler(w http.ResponseWriter, r *http.Request) {
+	wrr := wrrors.New("copyBlockHandler")
+	id, txId, where := r.PostFormValue("BlockId"), r.PostFormValue("TransactionId"), r.PostFormValue("Where")
+	if !fsutil.ValidateBlockId(id) {
+		http.Error(w, wrr.SWrap("Invalid block id "+id), http.StatusBadRequest)
+		return
+	}
+	if !fsutil.ValidateTransactionId(txId) {
+		http.Error(w, wrr.SWrap("Invalid transaction id "+txId), http.StatusBadRequest)
+		return
+	}
+	err := copyBlock(id, txId, where)
+	httputil.WriteResponse(w, nil, wrr.Wrap(err))
 }
 
 func validateBlockHandler(w http.ResponseWriter, r *http.Request) {
 	wrr := wrrors.New("validateBlockHandler")
-	id, transaction := r.PostFormValue("BlockId"), r.PostFormValue("TransactionId")
+	id, txId := r.PostFormValue("BlockId"), r.PostFormValue("TransactionId")
 	if !fsutil.ValidateBlockId(id) {
-		http.Error(w, wrr.SWrap("invalid block id "+id), http.StatusBadRequest)
+		http.Error(w, wrr.SWrap("Invalid block id "+id), http.StatusBadRequest)
 		return
 	}
-	if !fsutil.ValidateTransactionId(transaction) {
-		http.Error(w, wrr.SWrap("invalid transaction id "+id), http.StatusBadRequest)
+	if !fsutil.ValidateTransactionId(txId) {
+		http.Error(w, wrr.SWrap("Invalid transaction id "+id), http.StatusBadRequest)
 		return
 	}
-	resp, err := validateBlock(id, transaction)
-	httputil.WriteResponse(w, resp, wrr.Wrap(err))
+	err := validateBlock(id, txId)
+	httputil.WriteResponse(w, nil, wrr.Wrap(err))
 }
 
 func removeBlockHandler(w http.ResponseWriter, r *http.Request) {
 	wrr := wrrors.New("removeBlockHandler")
 	id := r.PostFormValue("BlockId")
 	if !fsutil.ValidateBlockId(id) {
-		http.Error(w, wrr.SWrap("invalid block id "+id), http.StatusBadRequest)
+		http.Error(w, wrr.SWrap("Invalid block id "+id), http.StatusBadRequest)
 		return
 	}
-	resp, err := removeBlock(id)
-	httputil.WriteResponse(w, resp, wrr.Wrap(err))
+	err := removeBlock(id)
+	httputil.WriteResponse(w, nil, wrr.Wrap(err))
 }
 
 func readBlockHandler(w http.ResponseWriter, r *http.Request) {
 	wrr := wrrors.New("readBlockHandler")
 	id := r.PostFormValue("BlockId")
 	if !fsutil.ValidateBlockId(id) {
-		http.Error(w, wrr.SWrap("invalid block id "+id), http.StatusBadRequest)
+		http.Error(w, wrr.SWrap("Invalid block id "+id), http.StatusBadRequest)
 		return
 	}
 	err := readBlock(id, w)

@@ -2,29 +2,22 @@ package server
 
 import (
 	"errors"
-	"time"
+	"fmt"
 
-	"github.com/Croohand/mapreduce/common/responses"
+	"github.com/Croohand/mapreduce/common/fsutil"
+	"github.com/Croohand/mapreduce/master/server/dbase"
 )
 
-func updateTransaction(id, path string) (r *responses.Answer, err error) {
-	r = &responses.Answer{}
-	v, ok := transactions.Get(path)
-	if ok {
-		tx, ok := v.(Transaction)
-		if !ok {
-			transactions.Remove(path)
-		} else if time.Since(tx.LastUpdate).Seconds() > transactionWaitTime {
-			transactions.Remove(path)
-			if tx.Id == id {
-				err = errors.New("transaction is too old")
-				return
-			}
-		} else if tx.Id != id {
-			return
-		}
+func updateTransaction(txId string) error {
+	var tx fsutil.Transaction
+	err := dbase.GetObject(dbase.Txs, txId, &tx)
+	if err != nil {
+		return err
 	}
-	transactions.Set(path, Transaction{Id: id, LastUpdate: time.Now()})
-	r.Success = true
-	return
+	if !tx.IsAlive() {
+		return errors.New(fmt.Sprintf("Transaction with id %s is not alive", txId))
+	}
+	tx.Update()
+	err = dbase.SetObject(dbase.Txs, txId, tx)
+	return err
 }

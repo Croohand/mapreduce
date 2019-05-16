@@ -4,19 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/Croohand/mapreduce/master/server/dbase"
-	cmap "github.com/orcaman/concurrent-map"
 )
-
-type Transaction struct {
-	Id         string
-	Path       string
-	LastUpdate time.Time
-}
-
-var transactions = cmap.New()
 
 type MasterConfig struct {
 	Port       int
@@ -27,7 +17,7 @@ type MasterConfig struct {
 var Config MasterConfig
 
 func Run() {
-	log.Println("opening bolt database")
+	log.Println("Opening bolt database")
 	dbase.Open()
 	defer dbase.Close()
 
@@ -36,10 +26,23 @@ func Run() {
 	http.HandleFunc("/GetMrConfig", getMrConfigHandler)
 	http.HandleFunc("/Transaction/IsAlive", isAliveTransactionHandler)
 	http.HandleFunc("/Transaction/Update", updateTransactionHandler)
-	http.HandleFunc("/Transaction/ValidateWrite", validateWriteTransactionHandler)
+	http.HandleFunc("/Transaction/Start", startTransactionHandler)
+	http.HandleFunc("/Transaction/Close", closeTransactionHandler)
+	http.HandleFunc("/Transaction/ValidateBlocks", validateBlocksHandler)
 	http.HandleFunc("/File/IsExists", isFileExistsHandler)
+	http.HandleFunc("/File/Remove", removeFileHandler)
+	http.HandleFunc("/File/Write", writeFileHandler)
+	http.HandleFunc("/File/Read", readFileHandler)
+	http.HandleFunc("/File/Merge", mergeFileHandler)
+	http.HandleFunc("/File/List", listFilesHandler)
 
-	log.Printf("starting master server with config %+v", Config)
+	log.Println("Starting master global processes")
+
+	go monitorSlaves()
+	go monitorTransactions()
+	go monitorFiles()
+
+	log.Printf("Starting master server with config %+v", Config)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil); err != nil {
 		panic(err)
 	}

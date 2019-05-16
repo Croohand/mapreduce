@@ -2,18 +2,17 @@ package server
 
 import (
 	"os"
-	"path/filepath"
 
-	"github.com/Croohand/mapreduce/common/responses"
+	"github.com/Croohand/mapreduce/common/fsutil"
 )
 
-func removeBlock(id string) (*responses.Answer, error) {
-	path := filepath.Join("files", id)
+func removeBlock(id string) error {
+	path := fsutil.GetBlockPath(id, "")
 	_, err := os.Stat(path)
 	if !os.IsNotExist(err) {
 		if err := os.Remove(path); err != nil {
-			return nil, err
+			return err
 		}
 	}
-	return &responses.Answer{true}, nil
+	return nil
 }

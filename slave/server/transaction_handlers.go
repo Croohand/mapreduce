@@ -10,11 +10,11 @@ import (
 
 func removeTransactionHandler(w http.ResponseWriter, r *http.Request) {
 	wrr := wrrors.New("removeTransactionHandler")
-	id := r.PostFormValue("TransactionId")
-	if !fsutil.ValidateTransactionId(id) {
-		http.Error(w, wrr.SWrap("invalid transaction id "+id), http.StatusBadRequest)
+	txId := r.PostFormValue("TransactionId")
+	if !fsutil.ValidateTransactionId(txId) {
+		http.Error(w, wrr.SWrap("Invalid transaction id "+txId), http.StatusBadRequest)
 		return
 	}
-	resp, err := removeTransaction(id)
-	httputil.WriteResponse(w, resp, wrr.Wrap(err))
+	err := removeTransaction(txId)
+	httputil.WriteResponse(w, nil, wrr.Wrap(err))
 }

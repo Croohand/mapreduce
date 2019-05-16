@@ -1,5 +1,7 @@
 package responses
 
+import "github.com/Croohand/mapreduce/common/fsutil"
+
 type MasterStatus struct {
 	Alive bool
 	Type  string
@@ -9,12 +11,20 @@ type TransactionStatus struct {
 	Alive bool
 }
 
+type StartedTransaction struct {
+	Id string
+}
+
 type MrConfig struct {
-	BlockSize            int
-	ReplicationFactor    int
-	MinReplicationFactor int
+	MaxRowLength      int
+	BlockSize         int
+	ReplicationFactor int
 }
 
 type FileStatus struct {
 	Exists bool
 }
+
+type PathBlocks []fsutil.BlockInfoEx
+
+type ListedFiles []string

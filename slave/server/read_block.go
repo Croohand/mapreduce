@@ -2,25 +2,22 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
-	"path/filepath"
+
+	"github.com/Croohand/mapreduce/common/fsutil"
 )
 
 func readBlock(id string, w io.Writer) error {
-	path := filepath.Join("files", id)
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return errors.New("block with id " + id + " doesn't exist")
+	if !checkBlock(id, "").Exists {
+		return errors.New(fmt.Sprintf("Block with id %s doesn't exist", id))
 	}
-	file, err := os.Open(path)
+	file, err := os.Open(fsutil.GetBlockPath(id, ""))
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 	_, err = io.Copy(w, file)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

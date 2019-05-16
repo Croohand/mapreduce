@@ -1,24 +1,23 @@
 package server
 
 import (
-	"time"
-
+	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/responses"
+	"github.com/Croohand/mapreduce/master/server/dbase"
 )
 
-const transactionWaitTime = 60
-
-func isAliveTransaction(id, path string) (r *responses.TransactionStatus) {
-	r = &responses.TransactionStatus{}
-	v, ok := transactions.Get(path)
-	r.Alive = false
-	if ok {
-		tx, ok := v.(Transaction)
-		if !ok || time.Since(tx.LastUpdate).Seconds() > transactionWaitTime {
-			transactions.Remove(path)
-			return
-		}
-		r.Alive = (tx.Id == id)
+func isAliveTransaction(txId string) (*responses.TransactionStatus, error) {
+	has, err := dbase.Has(dbase.Txs, txId)
+	if err != nil {
+		return nil, err
 	}
-	return
+	if !has {
+		return &responses.TransactionStatus{false}, nil
+	}
+	var tx fsutil.Transaction
+	err = dbase.GetObject(dbase.Txs, txId, &tx)
+	if err != nil {
+		return nil, err
+	}
+	return &responses.TransactionStatus{tx.IsAlive()}, nil
 }

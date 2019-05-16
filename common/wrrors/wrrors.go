@@ -5,7 +5,7 @@ type Wrror struct {
 	any bool
 }
 
-var subject string = "Unknown"
+var subject = "Unknown"
 
 func SetSubject(subj string) {
 	subject = subj

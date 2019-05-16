@@ -16,27 +16,28 @@ type SlaveConfig struct {
 var Config SlaveConfig
 
 func Run() {
-	log.Println("creating files directory for slave " + Config.Name)
-	if err := os.Mkdir("files", os.ModePerm); err != nil && !os.IsExist(err) {
+	log.Println("Creating blocks directory for slave " + Config.Name)
+	if err := os.Mkdir("blocks", os.ModePerm); err != nil && !os.IsExist(err) {
 		panic(err)
 	}
-	log.Println("creating transactions directory for slave " + Config.Name)
+	log.Println("Creating transactions directory for slave " + Config.Name)
 	if err := os.Mkdir("transactions", os.ModePerm); err != nil && !os.IsExist(err) {
 		panic(err)
 	}
 
 	http.HandleFunc("/IsAlive", isAliveHandler)
-	http.HandleFunc("/Block/IsExists", checkBlockHandler)
+	http.HandleFunc("/Block/Check", checkBlockHandler)
 	http.HandleFunc("/Block/Write", writeBlockHandler)
+	http.HandleFunc("/Block/Copy", copyBlockHandler)
 	http.HandleFunc("/Block/Remove", removeBlockHandler)
 	http.HandleFunc("/Block/Read", readBlockHandler)
 	http.HandleFunc("/Block/Validate", validateBlockHandler)
 	http.HandleFunc("/Transaction/Remove", removeTransactionHandler)
 
-	log.Printf("starting cleaner on slave server")
-	go cleaner()
+	log.Printf("Starting global processes on slave server")
+	go monitorTransactions()
 
-	log.Printf("starting slave server with config %+v", Config)
+	log.Printf("Starting slave server with config %+v", Config)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil); err != nil {
 		panic(err)
 	}

@@ -6,6 +6,6 @@ import (
 )
 
 func isFileExists(path string) (*responses.FileStatus, error) {
-	has, err := dbase.Has("Files", path)
+	has, err := dbase.Has(dbase.Files, path)
 	return &responses.FileStatus{has}, err
 }

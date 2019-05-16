@@ -27,7 +27,24 @@ func WriteResponse(w http.ResponseWriter, resp interface{}, err error) {
 	writeJson(w, resp)
 }
 
+func GetErrorNoClose(r *http.Response) error {
+	if r.StatusCode != http.StatusOK {
+		bytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return err
+		}
+		return wrrors.New("GetError").WrapS("status " + r.Status + ": " + string(bytes))
+	}
+	return nil
+}
+
+func GetError(r *http.Response) error {
+	defer r.Body.Close()
+	return GetErrorNoClose(r)
+}
+
 func GetJson(r *http.Response, res interface{}) error {
+	defer r.Body.Close()
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err

@@ -9,15 +9,11 @@ import (
 	"github.com/Croohand/mapreduce/common/wrrors"
 )
 
-func getArgs(w http.ResponseWriter, r *http.Request, wrr wrrors.Wrror) (id, path string, got bool) {
-	id, path = r.PostFormValue("TransactionId"), r.PostFormValue("Path")
+func getCommonArgs(w http.ResponseWriter, r *http.Request, wrr wrrors.Wrror) (txId string, got bool) {
+	txId = r.PostFormValue("TransactionId")
 	got = false
-	if !fsutil.ValidateTransactionId(id) {
-		http.Error(w, wrr.SWrap("invalid transaction id "+id), http.StatusBadRequest)
-		return
-	}
-	if !fsutil.ValidateFilePath(path) {
-		http.Error(w, wrr.SWrap("invalid file path "+path), http.StatusBadRequest)
+	if !fsutil.ValidateTransactionId(txId) {
+		http.Error(w, wrr.SWrap("Invalid transaction id "+txId), http.StatusBadRequest)
 		return
 	}
 	got = true
@@ -26,35 +22,70 @@ func getArgs(w http.ResponseWriter, r *http.Request, wrr wrrors.Wrror) (id, path
 
 func updateTransactionHandler(w http.ResponseWriter, r *http.Request) {
 	wrr := wrrors.New("updateTransactionHandler")
-	id, path, got := getArgs(w, r, wrr)
+	txId, got := getCommonArgs(w, r, wrr)
 	if !got {
 		return
 	}
-	resp, err := updateTransaction(id, path)
+	err := updateTransaction(txId)
+	httputil.WriteResponse(w, nil, wrr.Wrap(err))
+}
+
+func startTransactionHandler(w http.ResponseWriter, r *http.Request) {
+	wrr := wrrors.New("startTransactionHandler")
+	txTypeRaw := r.PostFormValue("TransactionType")
+	var txType fsutil.TransactionType
+	switch txTypeRaw {
+	case "Read":
+		txType = fsutil.TxTypeRead
+	case "Write":
+		txType = fsutil.TxTypeWrite
+	default:
+		http.Error(w, wrr.SWrap("Invalid transaction type"), http.StatusBadRequest)
+		return
+	}
+	paths := r.PostForm["Paths"]
+	for _, path := range paths {
+		if !fsutil.ValidateFilePath(path) {
+			http.Error(w, wrr.SWrap("Invalid file path "+path), http.StatusBadRequest)
+			return
+		}
+	}
+	resp, err := startTransaction(paths, txType)
 	httputil.WriteResponse(w, resp, wrr.Wrap(err))
+}
+
+func closeTransactionHandler(w http.ResponseWriter, r *http.Request) {
+	wrr := wrrors.New("closeTransactionHandler")
+	txId, got := getCommonArgs(w, r, wrr)
+	if !got {
+		return
+	}
+	err := closeTransaction(txId)
+	httputil.WriteResponse(w, nil, wrr.Wrap(err))
 }
 
 func isAliveTransactionHandler(w http.ResponseWriter, r *http.Request) {
 	wrr := wrrors.New("isAliveTransactionHandler")
-	id, path, got := getArgs(w, r, wrr)
+	txId, got := getCommonArgs(w, r, wrr)
 	if !got {
 		return
 	}
-	httputil.WriteResponse(w, isAliveTransaction(id, path), nil)
+	resp, err := isAliveTransaction(txId)
+	httputil.WriteResponse(w, resp, wrr.Wrap(err))
 }
 
-func validateWriteTransactionHandler(w http.ResponseWriter, r *http.Request) {
-	wrr := wrrors.New("validateWriteTransactionHandler")
-	id, path, got := getArgs(w, r, wrr)
+func validateBlocksHandler(w http.ResponseWriter, r *http.Request) {
+	wrr := wrrors.New("validateBlocksHandler")
+	txId, got := getCommonArgs(w, r, wrr)
 	if !got {
 		return
 	}
-	blocks := r.PostFormValue("PathInfo")
-	var pathInfo fsutil.PathInfo
-	if err := json.Unmarshal([]byte(blocks), &pathInfo); err != nil {
+	blocksRaw := r.PostFormValue("Blocks")
+	var blocks []*fsutil.BlockInfoEx
+	if err := json.Unmarshal([]byte(blocksRaw), &blocks); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	resp, err := validateWriteTransaction(id, path, pathInfo, []byte(blocks))
-	httputil.WriteResponse(w, resp, wrr.Wrap(err))
+	err := validateBlocks(txId, blocks)
+	httputil.WriteResponse(w, nil, wrr.Wrap(err))
 }

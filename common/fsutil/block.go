@@ -8,10 +8,16 @@ import (
 )
 
 type BlockInfo struct {
-	Id           string
 	Lower, Upper int
 	Slaves       []string
 }
+
+type BlockInfoEx struct {
+	Id string
+	BlockInfo
+}
+
+type BlockIds []string
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -30,7 +36,7 @@ func GenerateBlockId() string {
 	}
 	id := strings.Join([]string{string(b[0:4]), string(b[4:8]), string(b[8:12]), string(b[12:16])}, "-")
 	if !ValidateBlockId(id) {
-		panic("generated id " + id + " not matching pattern")
+		panic("Generated id " + id + " not matching pattern")
 	}
 	return id
 }
