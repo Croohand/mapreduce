@@ -59,7 +59,7 @@ func Read(path string) {
 	if err := httputil.GetJson(resp, &blocks); err != nil {
 		log.Panic(err)
 	}
-	res := make(chan bytes.Buffer, 5)
+	res := make(chan bytes.Buffer, 2)
 	go readInner(blocks, res)
 	for buf := range res {
 		fmt.Print(buf.String())
