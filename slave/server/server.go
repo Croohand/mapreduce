@@ -43,6 +43,7 @@ func Run() {
 		http.HandleFunc("/Block/Validate", validateBlockHandler)
 		http.HandleFunc("/Transaction/Remove", removeTransactionHandler)
 		http.HandleFunc("/Source/Build", buildSourceHandler)
+		http.HandleFunc("/Operation/Map", mapOperationHandler)
 	}
 
 	http.HandleFunc("/IsAlive", isAliveHandler)

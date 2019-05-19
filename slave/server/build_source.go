@@ -37,6 +37,10 @@ func buildSource(txId string) error {
 	if err != nil {
 		return err
 	}
+	err = fsutil.CreateMainDir(txId)
+	if err != nil {
+		return err
+	}
 	err = copyTemplate(txPath)
 	if err != nil {
 		return err

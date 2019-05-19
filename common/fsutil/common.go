@@ -40,10 +40,10 @@ func GetBlockPath(id, txId string) string {
 
 func CreateSourcesDir(txId string) error {
 	srcsPath := filepath.Join("transactions", txId, "src", "mruserlib")
-	err := os.MkdirAll(srcsPath, os.ModePerm)
-	if err != nil {
-		return err
-	}
+	return os.MkdirAll(srcsPath, os.ModePerm)
+}
+
+func CreateMainDir(txId string) error {
 	mainPath := filepath.Join("transactions", txId, "src", "main")
 	return os.MkdirAll(mainPath, os.ModePerm)
 }
