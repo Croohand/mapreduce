@@ -59,6 +59,10 @@ func CreateMainDir(txId string) error {
 	return os.MkdirAll(mainPath, os.ModePerm)
 }
 
+func GetSourcesDir(txId string) string {
+	return filepath.Join("transactions", txId, "src", "mruserlib")
+}
+
 func GetSourcePath(name, txId string) string {
-	return filepath.Join("transactions", txId, "src", "mruserlib", name)
+	return filepath.Join(GetSourcesDir(txId), name)
 }

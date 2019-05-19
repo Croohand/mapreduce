@@ -27,32 +27,40 @@ func main() {
 	commands.Init()
 
 	writeCommand := flag.NewFlagSet("write", flag.ExitOnError)
-	writePath := writeCommand.String("path", "", "MR path to write")
+	writePath := writeCommand.String("path", "", "HDFS path to write")
 	doAppend := writeCommand.Bool("append", false, "Append to file")
 
 	readCommand := flag.NewFlagSet("read", flag.ExitOnError)
-	readPath := readCommand.String("path", "", "MR path to read")
+	readPath := readCommand.String("path", "", "HDFS path to read")
 
 	existsCommand := flag.NewFlagSet("exists", flag.ExitOnError)
-	existsPath := existsCommand.String("path", "", "MR path to check")
+	existsPath := existsCommand.String("path", "", "HDFS path to check")
 
 	listCommand := flag.NewFlagSet("list", flag.ExitOnError)
 	listPrefix := listCommand.String("prefix", "", "List files with given prefix")
 
 	removeCommand := flag.NewFlagSet("remove", flag.ExitOnError)
-	removePath := removeCommand.String("path", "", "MR path to remove")
+	removePath := removeCommand.String("path", "", "HDFS path to remove")
 
 	mergeCommand := flag.NewFlagSet("merge", flag.ExitOnError)
-	mergeInPaths := mergeCommand.String("in", "", "MR input paths, comma separated")
-	mergeOutPath := mergeCommand.String("out", "", "MR output path")
+	mergeInPaths := mergeCommand.String("in", "", "HDFS input paths, comma separated")
+	mergeOutPath := mergeCommand.String("out", "", "HDFS output path")
+
+	mapReduceCommand := flag.NewFlagSet("mapreduce", flag.ExitOnError)
+	mapReduceInPaths := mapReduceCommand.String("in", "", "HDFS input paths, comma separated")
+	mapReduceOutPath := mapReduceCommand.String("out", "", "HDFS output path")
+	mapReduceReducersNum := mapReduceCommand.Int("reducers", 0, "Number of reducers for HDFS operation")
+	mapReduceMappersNum := mapReduceCommand.Int("mappers", 0, "Number of mappers for HDFS operation")
+	mapReduceSrcsPath := mapReduceCommand.String("srcs", "", "Path to mruserlib")
+	mapReduceDetached := mapReduceCommand.Bool("detached", false, "Detach from scheduler when operation starts")
 
 	copyCommand := flag.NewFlagSet("copy", flag.ExitOnError)
-	copyInPath := copyCommand.String("src", "", "MR source path")
-	copyOutPath := copyCommand.String("dst", "", "MR destination path")
+	copyInPath := copyCommand.String("src", "", "HDFS source path")
+	copyOutPath := copyCommand.String("dst", "", "HDFS destination path")
 
 	moveCommand := flag.NewFlagSet("move", flag.ExitOnError)
-	moveInPath := moveCommand.String("src", "", "MR source path")
-	moveOutPath := moveCommand.String("dst", "", "MR destination path")
+	moveInPath := moveCommand.String("src", "", "HDFS source path")
+	moveOutPath := moveCommand.String("dst", "", "HDFS destination path")
 
 	commandInfo := flagutil.CommandInfo{Name: "client", Aliases: aliases, Subcommands: []*flag.FlagSet{
 		existsCommand,
@@ -62,7 +70,8 @@ func main() {
 		copyCommand,
 		removeCommand,
 		moveCommand,
-		listCommand}}
+		listCommand,
+		mapReduceCommand}}
 
 	flagutil.CheckArgs(commandInfo)
 	switch flagutil.Parse(commandInfo) {
@@ -74,6 +83,8 @@ func main() {
 		commands.Exists(*existsPath)
 	case mergeCommand:
 		commands.Merge(strings.Split(*mergeInPaths, ","), *mergeOutPath)
+	case mapReduceCommand:
+		commands.MapReduce(strings.Split(*mapReduceInPaths, ","), *mapReduceOutPath, *mapReduceSrcsPath, *mapReduceMappersNum, *mapReduceReducersNum, *mapReduceDetached)
 	case copyCommand:
 		commands.Copy(*copyInPath, *copyOutPath)
 	case moveCommand:

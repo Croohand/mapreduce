@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"mruserlib"
 )
@@ -47,6 +48,9 @@ func fetchMapOutput(outputDir string, reducers int, out <-chan mruserlib.Entry, 
 	for entry := range out {
 		if len(entry.Key) == 0 {
 			panic("Error empty key")
+		}
+		if strings.ContainsAny(entry.Key, "\t") {
+			panic("Error key containing tab symbol: " + entry.Key)
 		}
 		if len(entry.Value) == 0 {
 			panic("Error empty value")

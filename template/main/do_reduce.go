@@ -113,6 +113,8 @@ func doReduce() {
 			heap.Push(&pq, ch)
 		}
 	}
-	close(in)
-	<-done
+	if prevKey != "" {
+		close(in)
+		<-done
+	}
 }

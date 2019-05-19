@@ -19,6 +19,10 @@ func (txHandler *TransactionHandler) Close() {
 	<-txHandler.signalDone
 }
 
+func NewTxHandler() *TransactionHandler {
+	return &TransactionHandler{make(chan bool), make(chan bool)}
+}
+
 func startTransactionInner(mrHost string, paths []string, txType string, ping bool) (string, *TransactionHandler) {
 	resp, err := http.PostForm(mrHost+"/Transaction/Start", url.Values{"Paths": paths, "TransactionType": {txType}})
 	if err != nil {
@@ -31,7 +35,7 @@ func startTransactionInner(mrHost string, paths []string, txType string, ping bo
 	if !ping {
 		return txInfo.Id, nil
 	}
-	txHandler := &TransactionHandler{make(chan bool), make(chan bool)}
+	txHandler := NewTxHandler()
 	go PingTransaction(mrHost, txInfo.Id, txHandler)
 	return txInfo.Id, txHandler
 }

@@ -48,6 +48,7 @@ func Run() {
 		http.HandleFunc("/Operation/SendResults", sendResultsOperationHandler)
 	} else {
 		http.HandleFunc("/Operation/PrepareMapReduce", prepareMapReduceOperationHandler)
+		http.HandleFunc("/Operation/StartMapReduce", startMapReduceOperationHandler)
 	}
 
 	http.HandleFunc("/IsAlive", isAliveHandler)
