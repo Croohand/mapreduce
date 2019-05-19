@@ -18,7 +18,7 @@ func Remove(path string) {
 	}
 
 	_, txHandler := startWriteTransaction([]string{path})
-	defer txHandler.close()
+	defer txHandler.Close()
 
 	resp, err := http.PostForm(mrConfig.Host+"/File/Remove", url.Values{"Path": {path}})
 	if err != nil {

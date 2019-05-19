@@ -71,3 +71,21 @@ func sendResultsOperationHandler(w http.ResponseWriter, r *http.Request) {
 	err := sendResultsOperation(blockId, txId, dst)
 	httputil.WriteResponse(w, nil, wrr.Wrap(err))
 }
+
+func prepareMapReduceOperationHandler(w http.ResponseWriter, r *http.Request) {
+	wrr := wrrors.New("prepareMapReduceOperationHandler")
+	out := r.PostFormValue("Out")
+	if !fsutil.ValidateFilePath(out) {
+		http.Error(w, wrr.SWrap("Invalid file path "+out), http.StatusBadRequest)
+		return
+	}
+	in := r.PostForm["In"]
+	for _, path := range in {
+		if !fsutil.ValidateFilePath(path) {
+			http.Error(w, wrr.SWrap("Invalid file path "+path), http.StatusBadRequest)
+			return
+		}
+	}
+	resp, err := prepareMapReduceOperation(in, out)
+	httputil.WriteResponse(w, resp, wrr.Wrap(err))
+}

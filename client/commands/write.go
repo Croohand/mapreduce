@@ -38,7 +38,7 @@ func Write(path string, doAppend bool) {
 		log.Panic("Invalid file path " + path)
 	}
 	txId, txHandler := startWriteTransaction([]string{path})
-	defer txHandler.close()
+	defer txHandler.Close()
 
 	blocks, err := httputil.WriteBlocks(os.Stdin, mrConfig.Host, txId, mrConfig.MrConfig)
 

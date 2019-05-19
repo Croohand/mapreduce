@@ -50,7 +50,7 @@ func Read(path string) {
 		log.Panic("File path " + path + " doesn't exist")
 	}
 	_, txHandler := startReadTransaction([]string{path})
-	defer txHandler.close()
+	defer txHandler.Close()
 	resp, err := http.PostForm(mrConfig.Host+"/File/Read", url.Values{"Path": {path}})
 	if err != nil {
 		log.Panic(err)
