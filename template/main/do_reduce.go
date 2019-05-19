@@ -74,22 +74,22 @@ func doReduce() {
 	if len(files) == 0 {
 		return
 	}
-	pq := make(PriorityQueue, len(files))
-	i := 0
+	pq := make(PriorityQueue, 0)
 	for _, fileInfo := range files {
+		if fileInfo.IsDir() {
+			continue
+		}
 		filePath := filepath.Join(inputDir, fileInfo.Name())
 		file, err := os.Open(filePath)
 		if err != nil {
 			panic(err)
 		}
 		defer file.Close()
-		pq[i] = &chunk{scanner: bufio.NewScanner(file)}
-		if !pq[i].nextEntry() {
-			panic("Empty file " + filePath)
+		ch := &chunk{scanner: bufio.NewScanner(file)}
+		if ch.nextEntry() {
+			heap.Push(&pq, ch)
 		}
-		i++
 	}
-	heap.Init(&pq)
 	prevKey := ""
 	var in chan mruserlib.Entry
 	var out chan string

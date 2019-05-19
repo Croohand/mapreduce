@@ -16,13 +16,17 @@ func writeMapInput(inFile string, in chan<- string, done chan<- bool) {
 		panic(err)
 	}
 	defer file.Close()
-	for scanner := bufio.NewScanner(file); scanner.Scan(); {
-		line := scanner.Text()
+	sc := bufio.NewScanner(file)
+	for sc.Scan() {
+		line := sc.Text()
 		if len(line) > 0 {
 			in <- line
 		}
 	}
 	close(in)
+	if sc.Err() != nil {
+		panic(sc.Err())
+	}
 	done <- true
 }
 

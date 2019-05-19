@@ -44,6 +44,7 @@ func Run() {
 		http.HandleFunc("/Transaction/Remove", removeTransactionHandler)
 		http.HandleFunc("/Source/Build", buildSourceHandler)
 		http.HandleFunc("/Operation/Map", mapOperationHandler)
+		http.HandleFunc("/Operation/Reduce", reduceOperationHandler)
 	}
 
 	http.HandleFunc("/IsAlive", isAliveHandler)
