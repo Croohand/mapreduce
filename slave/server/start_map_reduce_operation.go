@@ -195,6 +195,7 @@ func startMapReduceOperation(in []string, out, readTxId, txId string, mappers, r
 
 	err = httputil.TryValidateBlocks(Config.MasterAddr, txId, outBlocks)
 	httputil.CleanUp(txId, outBlocks)
+	removeTransaction(txId)
 
 	if err != nil {
 		panic(err)
