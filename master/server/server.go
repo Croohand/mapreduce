@@ -9,9 +9,10 @@ import (
 )
 
 type MasterConfig struct {
-	Port       int
-	Name       string
-	SlaveAddrs []string
+	Port           int
+	Name           string
+	SlaveAddrs     []string
+	SchedulerAddrs []string
 }
 
 var Config MasterConfig
@@ -23,6 +24,7 @@ func Run() {
 
 	http.HandleFunc("/IsAlive", isAliveHandler)
 	http.HandleFunc("/GetAvailableSlaves", getAvailableSlavesHandler)
+	http.HandleFunc("/GetAvailableScheduler", getAvailableSchedulerHandler)
 	http.HandleFunc("/GetMrConfig", getMrConfigHandler)
 	http.HandleFunc("/Transaction/IsAlive", isAliveTransactionHandler)
 	http.HandleFunc("/Transaction/Update", updateTransactionHandler)

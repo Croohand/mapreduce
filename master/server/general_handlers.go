@@ -17,6 +17,12 @@ func getAvailableSlavesHandler(w http.ResponseWriter, r *http.Request) {
 	httputil.WriteResponse(w, resp, wrr.Wrap(err))
 }
 
+func getAvailableSchedulerHandler(w http.ResponseWriter, r *http.Request) {
+	wrr := wrrors.New("getAvailableSchedulerHandler")
+	resp, err := getAvailableScheduler()
+	httputil.WriteResponse(w, resp, wrr.Wrap(err))
+}
+
 func getMrConfigHandler(w http.ResponseWriter, r *http.Request) {
 	httputil.WriteResponse(w, getMrConfig(), nil)
 }

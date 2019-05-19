@@ -16,6 +16,7 @@ func main() {
 	port := startCommand.Int("port", 11000, "Port for running master on")
 	name := startCommand.String("name", "master", "Name for master machine and its folder")
 	slaveAddrs := startCommand.String("slaves", "", "Comma separated slaves IP addresses")
+	schedulerAddrs := startCommand.String("schedulers", "", "Comma separated scheduler slaves IP addresses")
 	override := startCommand.Bool("override", false, "Override config.json")
 	commandInfo := flagutil.CommandInfo{Name: "master", Subcommands: []*flag.FlagSet{startCommand}}
 
@@ -24,7 +25,7 @@ func main() {
 	case startCommand:
 		wrrors.SetSubject(*name)
 		log.SetFlags(log.LstdFlags | log.Lshortfile)
-		server.Config = server.MasterConfig{Name: *name, Port: *port, SlaveAddrs: strings.Split(*slaveAddrs, ",")}
+		server.Config = server.MasterConfig{Name: *name, Port: *port, SlaveAddrs: strings.Split(*slaveAddrs, ","), SchedulerAddrs: strings.Split(*schedulerAddrs, ",")}
 		osutil.Init(*name, *override, &server.Config)
 		if *name != server.Config.Name {
 			panic("Name in config doesn't match with folder name")
