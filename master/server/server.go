@@ -25,6 +25,7 @@ func Run() {
 	http.HandleFunc("/IsAlive", isAliveHandler)
 	http.HandleFunc("/GetAvailableSlaves", getAvailableSlavesHandler)
 	http.HandleFunc("/GetAvailableScheduler", getAvailableSchedulerHandler)
+	http.HandleFunc("/GetAvailableReducers", getAvailableReducersHandler)
 	http.HandleFunc("/GetMrConfig", getMrConfigHandler)
 	http.HandleFunc("/Transaction/IsAlive", isAliveTransactionHandler)
 	http.HandleFunc("/Transaction/Update", updateTransactionHandler)
