@@ -22,9 +22,11 @@ SUCCESS=0
 go install -i ../client && go install -i ../master && go install -i ../slave && SUCCESS=1
 if [[ $SUCCESS == 1 ]]
 then
+    mkdir $MR_PATH
     $(go env GOPATH)/bin/master start -name "master" -port $MASTER_PORT -override -slaves $SLAVES -schedulers $SCHEDULER_ADDR &
     for i in $(seq -w 1 ${SLAVES_COUNT})
     do
+        mkdir "$MR_PATH/slave$i"
         rm -rf "$MR_PATH/slave$i/sources"
         mkdir "$MR_PATH/slave$i/sources"
         cp ../template/build.sh "$MR_PATH/slave$i/sources/"
