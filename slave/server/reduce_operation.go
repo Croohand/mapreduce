@@ -43,8 +43,5 @@ func reduceOperation(txId string) (responses.PathBlocks, error) {
 	} else {
 		reduceCmd.Wait()
 	}
-	if err != nil {
-		return nil, err
-	}
 	return blocks, err
 }

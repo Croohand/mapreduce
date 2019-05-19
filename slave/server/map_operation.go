@@ -16,7 +16,7 @@ func mapOperation(blockId, txId string, reducers int) error {
 	blockPath := fsutil.GetBlockPath(blockId, "")
 	resPath := fsutil.GetBlockPath(blockId, txId) + "-res"
 	err := os.Mkdir(resPath, os.ModePerm)
-	if err != nil {
+	if err != nil && !os.IsExist(err) {
 		return err
 	}
 	mapCmd := exec.Command(mainPath, "Map", blockPath, resPath, strconv.Itoa(reducers))
