@@ -1,6 +1,7 @@
 package httputil
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -81,7 +82,8 @@ func sendBlock(mrHost, txId string, cur bytes.Buffer, lower, upper int) (block *
 	return
 }
 
-func WriteBlocks(in <-chan string, mrHost, txId string, config responses.MrConfig, blocks *[]fsutil.BlockInfoEx, done chan<- error) {
+func WriteBlocks(in io.Reader, mrHost, txId string, config responses.MrConfig) ([]fsutil.BlockInfoEx, error) {
+	blocks := []fsutil.BlockInfoEx{}
 	var cur bytes.Buffer
 
 	lower, upper := 0, 0
@@ -99,39 +101,41 @@ func WriteBlocks(in <-chan string, mrHost, txId string, config responses.MrConfi
 		if err != nil {
 			return errors.New(fmt.Sprintf("Send block failed with error %s", err.Error()))
 		}
-		*blocks = append(*blocks, *block)
+		blocks = append(blocks, *block)
 		lower = upper
 		cur.Reset()
 		return nil
 	}
 
-	for line := range in {
+	sc := bufio.NewScanner(in)
+	for sc.Scan() {
+		line := sc.Text()
 		if len(line) == 0 {
 			continue
 		}
 		if len(line) >= config.MaxRowLength {
-			done <- errors.New(fmt.Sprintf("Max row length %d exceeded", config.MaxRowLength))
-			return
+			return nil, errors.New(fmt.Sprintf("Max row length %d exceeded", config.MaxRowLength))
 		}
 		if _, err := cur.WriteString(line); err != nil {
-			done <- err
-			return
+			return nil, err
 		}
 		upper += 1
 		cur.WriteByte('\n')
 		if cur.Len() >= config.BlockSize {
 			err := trySendBlock()
 			if err != nil {
-				done <- err
-				return
+				return nil, err
 			}
 		}
+	}
+	if sc.Err() != nil {
+		return nil, sc.Err()
 	}
 
 	if cur.Len() > 0 {
 		err := trySendBlock()
-		done <- err
+		return blocks, err
 	} else {
-		done <- nil
+		return blocks, nil
 	}
 }

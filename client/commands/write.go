@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"bufio"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -41,21 +40,8 @@ func Write(path string, doAppend bool) {
 	txId, txHandler := startWriteTransaction([]string{path})
 	defer txHandler.close()
 
-	blocks := []fsutil.BlockInfoEx{}
+	blocks, err := httputil.WriteBlocks(os.Stdin, mrConfig.Host, txId, mrConfig.MrConfig)
 
-	in := make(chan string, 10)
-	done := make(chan error)
-	go httputil.WriteBlocks(in, mrConfig.Host, txId, mrConfig.MrConfig, &blocks, done)
-	for scanner := bufio.NewScanner(os.Stdin); scanner.Scan(); {
-		line := scanner.Text()
-		select {
-		case err := <-done:
-			log.Panic(err)
-		case in <- line:
-		}
-	}
-	close(in)
-	err := <-done
 	if err != nil {
 		log.Panic(err)
 	}
