@@ -13,10 +13,7 @@ import (
 	"github.com/Croohand/mapreduce/common/httputil"
 )
 
-func copyBlock(id, txId, where string) error {
-	if !checkBlock(id, txId).Exists {
-		return errors.New(fmt.Sprintf("Block %s doesn't exist", fsutil.GetBlockPath(id, txId)))
-	}
+func copyFile(path, blockId, txId, where string, shuffle bool) error {
 	var b bytes.Buffer
 
 	w := multipart.NewWriter(&b)
@@ -25,7 +22,7 @@ func copyBlock(id, txId, where string) error {
 	if err != nil {
 		return err
 	}
-	if _, err = fw.Write([]byte(id)); err != nil {
+	if _, err = fw.Write([]byte(blockId)); err != nil {
 		return err
 	}
 
@@ -42,7 +39,6 @@ func copyBlock(id, txId, where string) error {
 		return err
 	}
 
-	path := fsutil.GetBlockPath(id, txId)
 	file, err := os.Open(path)
 	if err != nil {
 		return err
@@ -50,6 +46,17 @@ func copyBlock(id, txId, where string) error {
 	defer file.Close()
 	if _, err = io.Copy(fw, file); err != nil {
 		return err
+	}
+
+	if shuffle {
+		fw, err := w.CreateFormField("Shuffle")
+		if err != nil {
+			return err
+		}
+		_, err = fw.Write([]byte("true"))
+		if err != nil {
+			return err
+		}
 	}
 	w.Close()
 
@@ -63,9 +70,13 @@ func copyBlock(id, txId, where string) error {
 	if err != nil {
 		return err
 	}
-	if err := httputil.GetError(resp); err != nil {
-		return err
-	}
+	return httputil.GetError(resp)
+}
 
-	return nil
+func copyBlock(id, txId, where string) error {
+	path := fsutil.GetBlockPath(id, txId)
+	if !checkBlock(id, txId).Exists {
+		return errors.New(fmt.Sprintf("Block %s doesn't exist", path))
+	}
+	return copyFile(path, id, txId, where, false)
 }

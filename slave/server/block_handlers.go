@@ -24,7 +24,7 @@ func checkBlockHandler(w http.ResponseWriter, r *http.Request) {
 
 func writeBlockHandler(w http.ResponseWriter, r *http.Request) {
 	wrr := wrrors.New("writeBlockHandler")
-	id, txId := r.PostFormValue("BlockId"), r.PostFormValue("TransactionId")
+	id, txId, shuffle := r.PostFormValue("BlockId"), r.PostFormValue("TransactionId"), r.PostFormValue("Shuffle")
 	if !fsutil.ValidateBlockId(id) {
 		http.Error(w, wrr.SWrap("Invalid block id "+id), http.StatusBadRequest)
 		return
@@ -39,7 +39,7 @@ func writeBlockHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	err = writeBlock(id, txId, file)
+	err = writeBlock(id, txId, file, (shuffle == "true"))
 	httputil.WriteResponse(w, nil, wrr.Wrap(err))
 }
 

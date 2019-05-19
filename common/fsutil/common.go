@@ -6,7 +6,7 @@ import (
 )
 
 func CreateTxDir(txId string) error {
-	txPath := filepath.Join("transactions", txId)
+	txPath := GetTxDir(txId)
 	_, err := os.Stat(txPath)
 	if os.IsNotExist(err) {
 		if err := os.Mkdir(txPath, os.ModePerm); err != nil {
@@ -16,8 +16,19 @@ func CreateTxDir(txId string) error {
 	return nil
 }
 
+func CreateShuffleDir(txId string) error {
+	path := filepath.Join(GetTxDir(txId), "shuffle")
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		if err := os.Mkdir(path, os.ModePerm); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func RemoveTxDir(txId string) error {
-	path := filepath.Join("transactions", txId)
+	path := GetTxDir(txId)
 	_, err := os.Stat(path)
 	if !os.IsNotExist(err) {
 		if err := os.RemoveAll(path); err != nil {

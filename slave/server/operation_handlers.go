@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/httputil"
@@ -43,4 +44,30 @@ func reduceOperationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := reduceOperation(txId)
 	httputil.WriteResponse(w, resp, wrr.Wrap(err))
+}
+
+func sendResultsOperationHandler(w http.ResponseWriter, r *http.Request) {
+	wrr := wrrors.New("sendResultsOperationHandler")
+	txId := r.PostFormValue("TransactionId")
+	if !fsutil.ValidateTransactionId(txId) || len(txId) == 0 {
+		http.Error(w, wrr.SWrap("Invalid transaction id "+txId), http.StatusBadRequest)
+		return
+	}
+	blockId := r.PostFormValue("BlockId")
+	if !fsutil.ValidateBlockId(blockId) {
+		http.Error(w, wrr.SWrap("Invalid block id "+blockId), http.StatusBadRequest)
+		return
+	}
+	where := r.PostForm["Where"]
+	dst := map[string]string{}
+	for _, raw := range where {
+		toks := strings.SplitN(raw, " ", 2)
+		if len(toks) != 2 {
+			http.Error(w, wrr.SWrap("Invalid destinations field"), http.StatusBadRequest)
+			return
+		}
+		dst[toks[0]] = toks[1]
+	}
+	err := sendResultsOperation(blockId, txId, dst)
+	httputil.WriteResponse(w, nil, wrr.Wrap(err))
 }
