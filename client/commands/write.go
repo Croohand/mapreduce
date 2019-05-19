@@ -137,6 +137,9 @@ func Write(path string, doAppend bool) {
 
 	for scanner := bufio.NewScanner(os.Stdin); scanner.Scan(); {
 		line := scanner.Text()
+		if len(line) == 0 {
+			continue
+		}
 		if len(line) >= mrConfig.MaxRowLength {
 			log.Panic(fmt.Sprintf("Max row length %d exceeded", mrConfig.MaxRowLength))
 		}
