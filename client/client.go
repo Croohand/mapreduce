@@ -50,7 +50,7 @@ func main() {
 	mapReduceInPaths := mapReduceCommand.String("in", "", "HDFS input paths, comma separated")
 	mapReduceOutPath := mapReduceCommand.String("out", "", "HDFS output path")
 	mapReduceReducersNum := mapReduceCommand.Int("reducers", 0, "Number of reducers for HDFS operation")
-	mapReduceMappersNum := mapReduceCommand.Int("mappers", 0, "Number of mappers for HDFS operation")
+	mapReduceMappersNum := mapReduceCommand.Int("mappers", 0, "Number of maximum running mappers for HDFS operation")
 	mapReduceSrcsPath := mapReduceCommand.String("srcs", "", "Path to mruserlib")
 	mapReduceDetached := mapReduceCommand.Bool("detached", false, "Detach from scheduler when operation starts")
 
