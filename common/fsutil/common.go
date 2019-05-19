@@ -27,9 +27,27 @@ func RemoveTxDir(txId string) error {
 	return nil
 }
 
+func GetTxDir(txId string) string {
+	return filepath.Join("transactions", txId)
+}
+
 func GetBlockPath(id, txId string) string {
 	if txId == "" {
 		return filepath.Join("blocks", id)
 	}
 	return filepath.Join("transactions", txId, id)
+}
+
+func CreateSourcesDir(txId string) error {
+	srcsPath := filepath.Join("transactions", txId, "src", "mruserlib")
+	err := os.MkdirAll(srcsPath, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	mainPath := filepath.Join("transactions", txId, "src", "main")
+	return os.MkdirAll(mainPath, os.ModePerm)
+}
+
+func GetSourcePath(name, txId string) string {
+	return filepath.Join("transactions", txId, "src", "mruserlib", name)
 }
