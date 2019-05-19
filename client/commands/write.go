@@ -125,7 +125,7 @@ func Write(path string, doAppend bool) {
 			if err == nil {
 				break
 			}
-			time.Sleep(time.Second)
+			time.Sleep(100 * time.Millisecond)
 		}
 		if err != nil {
 			log.Panic(fmt.Sprintf("Send block failed with error %s", err.Error()))
