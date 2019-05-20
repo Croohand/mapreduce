@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
@@ -32,6 +33,15 @@ func MapReduce(in []string, out, srcsPath string, mappers, reducers int, detache
 
 	if !strings.HasSuffix(srcsPath, "mruserlib") {
 		log.Panic("Path to user library needs to have suffix mruserlib")
+	}
+
+	stat, err := os.Stat(srcsPath)
+	if err != nil && os.IsNotExist(err) {
+		log.Panic(err)
+	}
+
+	if !stat.IsDir() {
+		log.Panic("Path to user library is not a directory")
 	}
 
 	resp, err := http.PostForm(mrConfig.Host+"/GetAvailableScheduler", url.Values{})
