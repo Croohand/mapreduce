@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -43,7 +44,8 @@ func doTasks(blocks responses.PathBlocks, txId string, mappers int, reducersAddr
 
 	mapTask := func(block fsutil.BlockInfoEx, pool <-chan bool, errs chan<- error, done chan<- bool) {
 		var err error
-		for _, slave := range block.Slaves {
+		for _, i := range rand.Perm(len(block.Slaves)) {
+			slave := block.Slaves[i]
 			err = nil
 			var resp *http.Response
 			err = ensureSources(slave)
@@ -70,6 +72,7 @@ func doTasks(blocks responses.PathBlocks, txId string, mappers int, reducersAddr
 			if err = httputil.GetError(resp); err != nil {
 				continue
 			}
+			break
 		}
 
 		if err != nil {
