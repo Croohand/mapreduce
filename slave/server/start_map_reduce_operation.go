@@ -2,11 +2,13 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/httputil"
@@ -17,6 +19,8 @@ type reducerResult struct {
 	reducer string
 	result  responses.PathBlocks
 }
+
+var opStatuses = map[string]*responses.OperationStatus{}
 
 func doTasks(blocks responses.PathBlocks, txId string, mappers int, reducersAddrs []string) (responses.PathBlocks, error) {
 	reducers := len(reducersAddrs)
@@ -79,6 +83,7 @@ func doTasks(blocks responses.PathBlocks, txId string, mappers int, reducersAddr
 			errs <- errors.New("Couldn't finish map task for block " + block.Id + ": " + err.Error())
 			return
 		}
+		opStatuses[txId].MappersDone++
 		<-pool
 		done <- true
 	}
@@ -119,6 +124,7 @@ func doTasks(blocks responses.PathBlocks, txId string, mappers int, reducersAddr
 			errs <- err
 			return
 		}
+		opStatuses[txId].ReducersDone++
 		res <- reducerResult{reducer, blocks}
 	}
 
@@ -152,6 +158,7 @@ func doTasks(blocks responses.PathBlocks, txId string, mappers int, reducersAddr
 func startMapReduceOperation(in []string, out, readTxId, txId string, mappers, reducers int) {
 	defer func() {
 		if e := recover(); e != nil {
+			opStatuses[txId].Error = fmt.Sprintf("%v", e)
 			log.Print(e)
 		}
 	}()
@@ -184,15 +191,19 @@ func startMapReduceOperation(in []string, out, readTxId, txId string, mappers, r
 		blocks = append(blocks, curBlocks...)
 	}
 
+	opStatuses[txId] = &responses.OperationStatus{MappersAll: len(blocks), ReducersAll: reducers, Started: time.Now()}
+
 	outBlocks, err := doTasks(blocks, txId, mappers, reducersAddrs)
 
 	if err != nil {
+		opStatuses[txId].Error = err.Error()
 		panic(err)
 	}
 
 	err = httputil.TryWritePath(Config.MasterAddr, txId, out, outBlocks, false)
 
 	if err != nil {
+		opStatuses[txId].Error = err.Error()
 		panic(err)
 	}
 
@@ -201,6 +212,7 @@ func startMapReduceOperation(in []string, out, readTxId, txId string, mappers, r
 	removeTransaction(txId)
 
 	if err != nil {
+		opStatuses[txId].Error = err.Error()
 		panic(err)
 	}
 }

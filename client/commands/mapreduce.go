@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Croohand/mapreduce/common/fsutil"
 	"github.com/Croohand/mapreduce/common/httputil"
@@ -72,10 +73,27 @@ func MapReduce(in []string, out, srcsPath string, mappers, reducers int, detache
 	if err != nil {
 		log.Panic(err)
 	}
-	if err := httputil.GetJson(resp, &txs); err != nil {
+	if err := httputil.GetError(resp); err != nil {
 		log.Panic(err)
 	}
 	if detached {
 		return
+	}
+	for {
+		time.Sleep(500 * time.Millisecond)
+		resp, err := http.PostForm(scheduler+"/Operation/GetStatus", url.Values{"TransactionId": {txId}})
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		var opStatus responses.OperationStatus
+		if err := httputil.GetJson(resp, &opStatus); err != nil {
+			log.Println(err)
+			continue
+		}
+		log.Println(opStatus)
+		if opStatus.Done() || opStatus.Failed() {
+			break
+		}
 	}
 }

@@ -38,6 +38,18 @@ func mapOperationHandler(w http.ResponseWriter, r *http.Request) {
 	httputil.WriteResponse(w, nil, wrr.Wrap(err))
 }
 
+func getStatusOperationHandler(w http.ResponseWriter, r *http.Request) {
+	wrr := wrrors.New("getStatusOperationHandler")
+	txId := r.PostFormValue("TransactionId")
+	if !fsutil.ValidateTransactionId(txId) || len(txId) == 0 {
+		http.Error(w, wrr.SWrap("Invalid transaction id "+txId), http.StatusBadRequest)
+		return
+	}
+
+	resp, err := getStatusOperation(txId)
+	httputil.WriteResponse(w, resp, wrr.Wrap(err))
+}
+
 func reduceOperationHandler(w http.ResponseWriter, r *http.Request) {
 	wrr := wrrors.New("reduceOperationHandler")
 	txId := r.PostFormValue("TransactionId")
