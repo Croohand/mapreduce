@@ -15,13 +15,14 @@ const (
 	PathTxs = "PathTransactions"
 	Files   = "Files"
 	Blocks  = "Blocks"
+	DbPath  = "bolt.db"
 )
 
 var db *bolt.DB
 
 func Open() {
 	var err error
-	db, err = bolt.Open("bolt.db", 0600, nil)
+	db, err = bolt.Open(DbPath, 0600, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -32,6 +33,16 @@ func Close() {
 }
 
 func Set(bucket, key string, value []byte) error {
+	info, err := json.Marshal(map[string]string{
+		"type":   "set",
+		"bucket": bucket,
+		"key":    key,
+		"value":  string(value),
+	})
+	if err != nil {
+		return err
+	}
+	log(info)
 	return db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(bucket))
 		if err != nil {
@@ -59,6 +70,15 @@ func Has(bucket, key string) (bool, error) {
 }
 
 func Del(bucket, key string) error {
+	info, err := json.Marshal(map[string]string{
+		"type":   "del",
+		"bucket": bucket,
+		"key":    key,
+	})
+	if err != nil {
+		return err
+	}
+	log(info)
 	return db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(bucket))
 		if err != nil {
