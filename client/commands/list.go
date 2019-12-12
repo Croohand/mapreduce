@@ -12,7 +12,7 @@ import (
 )
 
 func List(prefix string) {
-	resp, err := http.PostForm(mrConfig.Host+"/File/List", url.Values{"Prefix": {prefix}})
+	resp, err := http.PostForm(mrConfig.GetHost()+"/File/List", url.Values{"Prefix": {prefix}})
 	if err != nil {
 		log.Panic(err)
 	}

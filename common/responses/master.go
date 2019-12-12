@@ -5,6 +5,7 @@ import "github.com/Croohand/mapreduce/common/fsutil"
 type MasterStatus struct {
 	Alive bool
 	Type  string
+	State string
 }
 
 type TransactionStatus struct {

@@ -1,7 +1,15 @@
 package dbase
 
 import (
+	"bytes"
+	"errors"
+	"io"
+	"log"
+	"mime/multipart"
+	"net/http"
 	"os"
+
+	"github.com/Croohand/mapreduce/common/httputil"
 )
 
 const (
@@ -22,7 +30,29 @@ func StartJournal(mAddrs []string) {
 }
 
 func StopJournal() {
-	exit <- true
+	if started {
+		exit <- true
+	}
+}
+
+func ApplyEntry(e map[string]string) error {
+	t, ok := e["type"]
+	if !ok {
+		return errors.New("No type in journal entry")
+	}
+	var err error
+	switch t {
+	case "set":
+		err = Set(e["bucket"], e["key"], []byte(e["value"]))
+	case "del":
+		err = Del(e["bucket"], e["key"])
+	default:
+		return errors.New("Unknown type " + t + " in journal entry")
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func openJournal() *os.File {
@@ -65,9 +95,63 @@ func run() {
 }
 
 func dumpJournal() {
+	var orig bytes.Buffer
+	f, err := os.Open(JournalPath)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	_, err = io.Copy(&orig, f)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	f.Close()
+
+	success := 0
+
+	for _, addr := range masterAddrs[1:] {
+		cur := orig
+
+		var b bytes.Buffer
+		w := multipart.NewWriter(&b)
+
+		fw, err := w.CreateFormFile("Journal", "File")
+		if err != nil {
+			continue
+		}
+		if _, err = io.Copy(fw, &cur); err != nil {
+			continue
+		}
+
+		w.Close()
+
+		req, err := http.NewRequest("POST", addr+"/Journal/Apply", &b)
+		if err != nil {
+			continue
+		}
+		req.Header.Set("Content-Type", w.FormDataContentType())
+		req.Close = true
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			continue
+		}
+		if err := httputil.GetError(resp); err != nil {
+			continue
+		}
+		success += 1
+	}
+
+	if success == len(masterAddrs)-1 {
+		f, err := os.Create(JournalPath)
+		if err != nil {
+			f.Close()
+		}
+	}
 }
 
-func log(info []byte) {
+func logJournal(info []byte) {
 	if started {
 		entries <- info
 	}

@@ -7,5 +7,8 @@ import (
 )
 
 func isAliveHandler(w http.ResponseWriter, r *http.Request) {
+	if r.PostFormValue("Switch") == "true" {
+		Config.MasterAddr = r.PostFormValue("MasterAddr")
+	}
 	httputil.WriteResponse(w, isAlive(), nil)
 }

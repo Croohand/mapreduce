@@ -59,24 +59,24 @@ func sendBlock(mrHost, txId string, cur bytes.Buffer, lower, upper int) (block *
 	initialSlave := block.Slaves[0]
 	req, err := http.NewRequest("POST", initialSlave+"/Block/Write", &b)
 	if err != nil {
-		return nil, err
+		return
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	req.Close = true
 	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return
 	}
-	if err := GetError(resp); err != nil {
-		return nil, err
+	if err = GetError(resp); err != nil {
+		return
 	}
 	for _, addr := range block.Slaves[1:] {
 		resp, err = http.PostForm(initialSlave+"/Block/Copy", url.Values{"TransactionId": {txId}, "BlockId": {block.Id}, "Where": {addr}})
 		if err != nil {
-			return nil, err
+			return
 		}
-		if err := GetError(resp); err != nil {
-			return nil, err
+		if err = GetError(resp); err != nil {
+			return
 		}
 	}
 	return

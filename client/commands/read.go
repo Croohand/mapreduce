@@ -51,7 +51,7 @@ func Read(path string) {
 	}
 	_, txHandler := startReadTransaction([]string{path})
 	defer txHandler.Close()
-	resp, err := http.PostForm(mrConfig.Host+"/File/Read", url.Values{"Path": {path}})
+	resp, err := http.PostForm(mrConfig.GetHost()+"/File/Read", url.Values{"Path": {path}})
 	if err != nil {
 		log.Panic(err)
 	}

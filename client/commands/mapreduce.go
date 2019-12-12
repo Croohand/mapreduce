@@ -45,7 +45,7 @@ func MapReduce(in []string, out, srcsPath string, mappers, reducers int, detache
 		log.Panic("Path to user library is not a directory")
 	}
 
-	resp, err := http.PostForm(mrConfig.Host+"/GetAvailableScheduler", url.Values{})
+	resp, err := http.PostForm(mrConfig.GetHost()+"/GetAvailableScheduler", url.Values{})
 	if err != nil {
 		log.Panic(err)
 	}

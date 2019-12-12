@@ -12,6 +12,7 @@ import (
 
 func main() {
 	startCommand := flag.NewFlagSet("start", flag.ExitOnError)
+	env := startCommand.String("env", "dev", "dev (default) — local development, prod — production")
 	port := startCommand.Int("port", 11001, "Port for running slave on")
 	name := startCommand.String("name", "slave", "Name for slave machine and its folder")
 	masterAddr := startCommand.String("master", "", "Master IP address")
@@ -24,7 +25,13 @@ func main() {
 	case startCommand:
 		wrrors.SetSubject(*name)
 		log.SetFlags(log.LstdFlags | log.Lshortfile)
-		server.Config = server.SlaveConfig{Name: *name, Port: *port, MasterAddr: *masterAddr, Scheduler: *scheduler}
+		server.Config = server.SlaveConfig{
+			Env:        *env,
+			Name:       *name,
+			Port:       *port,
+			MasterAddr: *masterAddr,
+			Scheduler:  *scheduler,
+		}
 		osutil.Init(*name, *override, &server.Config)
 		if *name != server.Config.Name {
 			panic("Name in config doesn't match with folder name")

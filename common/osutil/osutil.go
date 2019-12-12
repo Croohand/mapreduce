@@ -37,7 +37,7 @@ func Init(name string, override bool, config interface{}) {
 	} else {
 		log.Println("Config overriden from CLI arguments")
 	}
-	if err := saveConfig(config); err != nil {
+	if err := SaveConfig(config); err != nil {
 		log.Println("Couldn't save config to " + configName + ", error: " + err.Error())
 	} else {
 		log.Println("Saved config to " + configName)
@@ -61,7 +61,7 @@ func getConfig(config interface{}) error {
 	return json.Unmarshal(bytes, config)
 }
 
-func saveConfig(config interface{}) error {
+func SaveConfig(config interface{}) error {
 	file, err := os.Create(configName)
 	if err != nil {
 		return err

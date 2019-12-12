@@ -1,16 +1,28 @@
 #!/usr/bin/env bash
 
-MASTER_PORT=11000
-SLAVES_PORT=11001
+MASTERS_PORT=11000
+MASTERS_COUNT=3
+SLAVES_PORT=$((${MASTERS_PORT} + $MASTERS_COUNT))
 SLAVES_COUNT=5
-MASTER_ADDR="http://localhost:${MASTER_PORT}"
 SCHEDULER_PORT=$((${SLAVES_PORT} + $SLAVES_COUNT))
 SCHEDULER_ADDR="http://localhost:${SCHEDULER_PORT}"
 
 function get_slaves() {
+    RES=""
     for i in $(seq -w 1 ${SLAVES_COUNT})
     do
         RES=$RES",http://localhost:$((${SLAVES_PORT} + $i - 1))"
+    done
+    echo $RES
+}
+
+function get_masters() {
+    RES="http://localhost:$((${MASTERS_PORT} + $1 - 1))"
+    for i in $(seq -w 1 ${MASTERS_COUNT})
+    do
+        if [[ $i != $1 ]]; then
+            RES=$RES",http://localhost:$((${MASTERS_PORT} + $i - 1))"
+        fi
     done
     echo $RES
 }
@@ -23,7 +35,6 @@ go install -i ../client && go install -i ../master && go install -i ../slave && 
 if [[ $SUCCESS == 1 ]]
 then
     mkdir $MR_PATH
-    $(go env GOPATH)/bin/master start -name "master" -port $MASTER_PORT -override -slaves $SLAVES -schedulers $SCHEDULER_ADDR &
     for i in $(seq -w 1 ${SLAVES_COUNT})
     do
         mkdir "$MR_PATH/slave$i"
@@ -31,7 +42,23 @@ then
         mkdir "$MR_PATH/slave$i/sources"
         cp ../template/build.sh "$MR_PATH/slave$i/sources/"
         cp -r ../template/main "$MR_PATH/slave$i/sources/main"
-        $(go env GOPATH)/bin/slave start -name "slave$i" -port "$((${SLAVES_PORT} + $i - 1))" -master $MASTER_ADDR -override &
+        if [[ $1 == 0 ]]; then
+            $(go env GOPATH)/bin/slave start -name "slave$i" -port "$((${SLAVES_PORT} + $i - 1))" -override &
+        else
+            $(go env GOPATH)/bin/slave start -name "slave$i" &
+        fi
     done
-    $(go env GOPATH)/bin/slave start -name "scheduler" -port $SCHEDULER_PORT -master $MASTER_ADDR -scheduler -override &
+    if [[ $1 == 0 ]]; then
+        $(go env GOPATH)/bin/slave start -name "scheduler1" -port $SCHEDULER_PORT -scheduler -override &
+        $(go env GOPATH)/bin/slave start -name "scheduler2" -port $(($SCHEDULER_PORT + 1)) -scheduler -override &
+        $(go env GOPATH)/bin/master start -name "master1" -port $MASTERS_PORT -masters $(get_masters 1) -slaves $SLAVES -schedulers $SCHEDULER_ADDR -override &
+        $(go env GOPATH)/bin/master start -name "master2" -port $(($MASTERS_PORT+1)) -masters $(get_masters 2) -slaves $SLAVES -schedulers $SCHEDULER_ADDR -override &
+        $(go env GOPATH)/bin/master start -name "master3" -port $(($MASTERS_PORT+2)) -masters $(get_masters 3) -slaves $SLAVES -schedulers $SCHEDULER_ADDR -override &
+    else
+        $(go env GOPATH)/bin/slave start -name "scheduler1" &
+        $(go env GOPATH)/bin/slave start -name "scheduler2" &
+        $(go env GOPATH)/bin/master start -name "master1" &
+        $(go env GOPATH)/bin/master start -name "master2" &
+        $(go env GOPATH)/bin/master start -name "master3" &
+    fi
 fi

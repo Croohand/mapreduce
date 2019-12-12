@@ -15,19 +15,19 @@ func Write(path string, doAppend bool) {
 	txId, txHandler := startWriteTransaction([]string{path})
 	defer txHandler.Close()
 
-	blocks, err := httputil.WriteBlocks(os.Stdin, mrConfig.Host, txId, mrConfig.MrConfig)
+	blocks, err := httputil.WriteBlocks(os.Stdin, mrConfig.GetHost(), txId, mrConfig.MrConfig)
 
 	if err != nil {
 		log.Panic(err)
 	}
 
-	err = httputil.TryWritePath(mrConfig.Host, txId, path, blocks, doAppend)
+	err = httputil.TryWritePath(mrConfig.GetHost(), txId, path, blocks, doAppend)
 
 	if err != nil {
 		log.Panic(err)
 	}
 
-	err = httputil.TryValidateBlocks(mrConfig.Host, txId, blocks)
+	err = httputil.TryValidateBlocks(mrConfig.GetHost(), txId, blocks)
 	httputil.CleanUp(txId, blocks)
 
 	if err != nil {

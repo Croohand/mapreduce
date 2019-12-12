@@ -8,6 +8,7 @@ import (
 )
 
 type SlaveConfig struct {
+	Env        string
 	Port       int
 	Name       string
 	MasterAddr string
@@ -59,7 +60,11 @@ func Run() {
 	go monitorTransactions()
 
 	log.Printf("Starting slave server with config %+v", Config)
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil); err != nil {
+	addr := fmt.Sprintf(":%d", Config.Port)
+	if Config.Env == "dev" {
+		addr = "localhost" + addr
+	}
+	if err := http.ListenAndServe(addr, nil); err != nil {
 		panic(err)
 	}
 }

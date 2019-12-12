@@ -29,12 +29,11 @@ func ensureSlave(slave string) error {
 func monitorSlaves() {
 	wrr := wrrors.New("monitorSlaves")
 	for {
-		timeutil.Sleep(time.Minute)
 		log.Println(Config.Name + " monitorSlaves starting new iteration")
 		for _, slave := range Config.SlaveAddrs {
 			lastAv, hasAv := lastAvailable[slave]
 			lastEn, hasEn := lastEnsured[slave]
-			if !httputil.IsSlaveAvailable(slave) {
+			if !httputil.IsSlaveAvailableWithSwitch(slave, Config.MasterAddrs[0]) {
 				if (!hasAv || time.Since(lastAv) > 5*time.Minute) && (!hasEn || time.Since(lastEn) > time.Since(lastAv)) {
 					log.Println(wrr.WrapS("Slave " + slave + " seems to be down"))
 					err := ensureSlave(slave)
@@ -56,5 +55,11 @@ func monitorSlaves() {
 				}
 			}
 		}
+
+		for _, slave := range Config.SchedulerAddrs {
+			httputil.IsSlaveAvailableWithSwitch(slave, Config.MasterAddrs[0])
+		}
+
+		timeutil.Sleep(time.Minute)
 	}
 }

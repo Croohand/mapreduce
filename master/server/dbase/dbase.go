@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/Croohand/mapreduce/common/wrrors"
 	bolt "go.etcd.io/bbolt"
@@ -33,16 +34,19 @@ func Close() {
 }
 
 func Set(bucket, key string, value []byte) error {
+	ts, _ := time.Now().MarshalText()
 	info, err := json.Marshal(map[string]string{
 		"type":   "set",
 		"bucket": bucket,
 		"key":    key,
 		"value":  string(value),
+		"ts":     string(ts),
 	})
 	if err != nil {
 		return err
 	}
-	log(info)
+	logJournal(info)
+
 	return db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(bucket))
 		if err != nil {
@@ -70,15 +74,18 @@ func Has(bucket, key string) (bool, error) {
 }
 
 func Del(bucket, key string) error {
+	ts, _ := time.Now().MarshalText()
 	info, err := json.Marshal(map[string]string{
 		"type":   "del",
 		"bucket": bucket,
 		"key":    key,
+		"ts":     string(ts),
 	})
 	if err != nil {
 		return err
 	}
-	log(info)
+	logJournal(info)
+
 	return db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(bucket))
 		if err != nil {

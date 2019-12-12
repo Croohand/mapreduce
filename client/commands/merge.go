@@ -24,7 +24,7 @@ func Merge(in []string, out string) {
 	_, writeTxHandler := startWriteTransaction([]string{out})
 	defer writeTxHandler.Close()
 
-	resp, err := http.PostForm(mrConfig.Host+"/File/Merge", url.Values{"In": in, "Out": {out}})
+	resp, err := http.PostForm(mrConfig.GetHost()+"/File/Merge", url.Values{"In": in, "Out": {out}})
 	if err != nil {
 		log.Panic(err)
 	}

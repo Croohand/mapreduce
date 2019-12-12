@@ -42,3 +42,15 @@ func getAvailableSchedulerHandler(w http.ResponseWriter, r *http.Request) {
 func getMrConfigHandler(w http.ResponseWriter, r *http.Request) {
 	httputil.WriteResponse(w, getMrConfig(), nil)
 }
+
+func applyJournalHandler(w http.ResponseWriter, r *http.Request) {
+	wrr := wrrors.New("applyJournalHandler")
+	file, _, err := r.FormFile("Journal")
+	if err != nil {
+		http.Error(w, wrr.Wrap(err).Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+	applyJournal(file)
+	httputil.WriteResponse(w, nil, nil)
+}
