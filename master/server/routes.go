@@ -32,6 +32,7 @@ var (
 func checkState(f handlerFunc) handlerFunc {
 	res := func(w http.ResponseWriter, r *http.Request) {
 		if state == "passive" {
+			http.Error(w, "This master replica is in passive mode", http.StatusMethodNotAllowed)
 			return
 		}
 		f(w, r)
