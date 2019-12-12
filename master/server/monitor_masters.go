@@ -30,6 +30,7 @@ func monitorMasters() {
 		if !anyActive {
 			log.Println(Config.Name + " switch state to active, become active master")
 			state = "active"
+			Config.LastJournalTs = time.Now()
 			go RunServices()
 			return
 		}
