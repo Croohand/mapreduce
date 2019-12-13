@@ -12,7 +12,7 @@ import (
 
 func main() {
 	startCommand := flag.NewFlagSet("start", flag.ExitOnError)
-	env := startCommand.String("env", "dev", "dev (default) — local development, prod — production")
+	env := startCommand.String("env", "dev", "dev — local development, prod — production")
 	port := startCommand.Int("port", 11001, "Port for running slave on")
 	name := startCommand.String("name", "slave", "Name for slave machine and its folder")
 	masterAddr := startCommand.String("master", "", "Master IP address")

@@ -14,7 +14,7 @@ import (
 
 func main() {
 	startCommand := flag.NewFlagSet("start", flag.ExitOnError)
-	env := startCommand.String("env", "dev", "dev (default) — local development, prod — production")
+	env := startCommand.String("env", "dev", "dev — local development, prod — production")
 	port := startCommand.Int("port", 11000, "Port for running master on")
 	name := startCommand.String("name", "master", "Name for master machine and its folder")
 	slaveAddrs := startCommand.String("slaves", "", "Comma separated slaves IP addresses")
