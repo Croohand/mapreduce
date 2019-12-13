@@ -1,14 +1,10 @@
 package httputil
 
 import (
-	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/Croohand/mapreduce/common/responses"
 )
-
-var avChecker = http.Client{Timeout: time.Duration(100 * time.Millisecond)}
 
 func IsSlaveAvailable(addr string) bool {
 	resp, err := avChecker.Get(addr + "/IsAlive")

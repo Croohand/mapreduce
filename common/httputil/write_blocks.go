@@ -47,7 +47,7 @@ func sendBlock(mrHost, txId string, cur bytes.Buffer, lower, upper int) (block *
 
 	w.Close()
 
-	resp, err := http.Get(mrHost + "/GetAvailableSlaves")
+	resp, err := httpClient.Get(mrHost + "/GetAvailableSlaves")
 	if err != nil {
 		return
 	}
@@ -63,7 +63,7 @@ func sendBlock(mrHost, txId string, cur bytes.Buffer, lower, upper int) (block *
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	req.Close = true
-	resp, err = http.DefaultClient.Do(req)
+	resp, err = httpClient.Do(req)
 	if err != nil {
 		return
 	}
@@ -71,7 +71,7 @@ func sendBlock(mrHost, txId string, cur bytes.Buffer, lower, upper int) (block *
 		return
 	}
 	for _, addr := range block.Slaves[1:] {
-		resp, err = http.PostForm(initialSlave+"/Block/Copy", url.Values{"TransactionId": {txId}, "BlockId": {block.Id}, "Where": {addr}})
+		resp, err = httpClient.PostForm(initialSlave+"/Block/Copy", url.Values{"TransactionId": {txId}, "BlockId": {block.Id}, "Where": {addr}})
 		if err != nil {
 			return
 		}

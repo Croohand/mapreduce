@@ -23,6 +23,7 @@ type MasterConfig struct {
 
 var Config MasterConfig
 var state = "passive"
+var httpClient = httputil.NewClient("")
 
 func RunServices() {
 	log.Println("Starting master global processes")
@@ -35,7 +36,11 @@ func RunServices() {
 
 func Run() {
 	log.Println("Opening bolt database")
-	dbase.Open()
+	if Config.Env == "dev" {
+		dbase.Open(Config.Name)
+	} else {
+		dbase.Open("")
+	}
 	defer dbase.Close()
 	defer dbase.StopJournal()
 
@@ -48,7 +53,8 @@ func Run() {
 	mux := http.Handler(http.DefaultServeMux)
 	if Config.Env == "dev" {
 		addr = "localhost" + addr
-		mux = httputil.MuxWithLogging{Config.LoggerAddr}
+		mux = httputil.DefaultMuxWithLogging{Config.Name, Config.LoggerAddr}
+		httpClient = httputil.NewClient(Config.Name)
 	}
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		panic(err)

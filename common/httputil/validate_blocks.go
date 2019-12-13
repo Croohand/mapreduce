@@ -3,7 +3,6 @@ package httputil
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
 	"net/url"
 	"strconv"
 
@@ -24,7 +23,7 @@ func TryWritePath(mrHost, txId, path string, blocks []fsutil.BlockInfoEx, doAppe
 		if l > 0 {
 			doAppend = true
 		}
-		resp, err := http.PostForm(mrHost+"/File/Write", url.Values{"Path": {path}, "Append": {strconv.FormatBool(doAppend)}, "BlockIds": blockIds[l:r]})
+		resp, err := httpClient.PostForm(mrHost+"/File/Write", url.Values{"Path": {path}, "Append": {strconv.FormatBool(doAppend)}, "BlockIds": blockIds[l:r]})
 		if err != nil {
 			return errors.New("Failed to write path in database: " + err.Error())
 		}
@@ -46,7 +45,7 @@ func TryValidateBlocks(mrHost, txId string, blocks []fsutil.BlockInfoEx) error {
 		if err != nil {
 			return err
 		}
-		resp, err := http.PostForm(mrHost+"/Transaction/ValidateBlocks", url.Values{"TransactionId": {txId}, "Blocks": {string(b)}})
+		resp, err := httpClient.PostForm(mrHost+"/Transaction/ValidateBlocks", url.Values{"TransactionId": {txId}, "Blocks": {string(b)}})
 		if err != nil {
 			return err
 		}
@@ -68,7 +67,7 @@ func CleanUp(txId string, blocks []fsutil.BlockInfoEx) {
 		if !IsSlaveAvailable(slave) {
 			continue
 		}
-		resp, err := http.PostForm(slave+"/Transaction/Remove", url.Values{"TransactionId": {txId}})
+		resp, err := httpClient.PostForm(slave+"/Transaction/Remove", url.Values{"TransactionId": {txId}})
 		if err != nil {
 			continue
 		}

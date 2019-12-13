@@ -2,7 +2,6 @@ package commands
 
 import (
 	"log"
-	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -45,7 +44,7 @@ func MapReduce(in []string, out, srcsPath string, mappers, reducers int, detache
 		log.Panic("Path to user library is not a directory")
 	}
 
-	resp, err := http.PostForm(mrConfig.GetHost()+"/GetAvailableScheduler", url.Values{})
+	resp, err := httpClient.PostForm(mrConfig.GetHost()+"/GetAvailableScheduler", url.Values{})
 	if err != nil {
 		log.Panic(err)
 	}
@@ -55,7 +54,7 @@ func MapReduce(in []string, out, srcsPath string, mappers, reducers int, detache
 	}
 
 	var txs responses.PreparedOperation
-	resp, err = http.PostForm(scheduler+"/Operation/PrepareMapReduce", url.Values{"In": in, "Out": {out}})
+	resp, err = httpClient.PostForm(scheduler+"/Operation/PrepareMapReduce", url.Values{"In": in, "Out": {out}})
 	if err != nil {
 		log.Panic(err)
 	}
@@ -69,7 +68,7 @@ func MapReduce(in []string, out, srcsPath string, mappers, reducers int, detache
 		log.Panic(err)
 	}
 
-	resp, err = http.PostForm(scheduler+"/Operation/StartMapReduce", url.Values{"In": in, "Out": {out}, "ReadTransactionId": {txs.ReadTxId}, "WriteTransactionId": {txs.WriteTxId}, "Reducers": {strconv.Itoa(reducers)}, "Mappers": {strconv.Itoa(mappers)}})
+	resp, err = httpClient.PostForm(scheduler+"/Operation/StartMapReduce", url.Values{"In": in, "Out": {out}, "ReadTransactionId": {txs.ReadTxId}, "WriteTransactionId": {txs.WriteTxId}, "Reducers": {strconv.Itoa(reducers)}, "Mappers": {strconv.Itoa(mappers)}})
 	if err != nil {
 		log.Panic(err)
 	}
@@ -81,7 +80,7 @@ func MapReduce(in []string, out, srcsPath string, mappers, reducers int, detache
 	}
 	for {
 		time.Sleep(500 * time.Millisecond)
-		resp, err := http.PostForm(scheduler+"/Operation/GetStatus", url.Values{"TransactionId": {txId}})
+		resp, err := httpClient.PostForm(scheduler+"/Operation/GetStatus", url.Values{"TransactionId": {txId}})
 		if err != nil {
 			log.Println(err)
 			continue

@@ -3,7 +3,6 @@ package server
 import (
 	"bytes"
 	"errors"
-	"net/http"
 	"os/exec"
 	"path/filepath"
 
@@ -14,7 +13,7 @@ import (
 
 func reduceOperation(txId string) (responses.PathBlocks, error) {
 	var mrConfig responses.MrConfig
-	resp, err := http.Get(Config.MasterAddr + "/GetMrConfig")
+	resp, err := httpClient.Get(Config.MasterAddr + "/GetMrConfig")
 	if err != nil {
 		return nil, errors.New("Couldn't get MR config from master, error: " + err.Error())
 	}

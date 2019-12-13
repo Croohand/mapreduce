@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Croohand/mapreduce/common/httputil"
 	"github.com/Croohand/mapreduce/common/wrrors"
 	bolt "go.etcd.io/bbolt"
 )
@@ -20,8 +21,10 @@ const (
 )
 
 var db *bolt.DB
+var httpClient httputil.ClientWithLogging
 
-func Open() {
+func Open(name string) {
+	httpClient = httputil.NewClient(name)
 	var err error
 	db, err = bolt.Open(DbPath, 0600, nil)
 	if err != nil {

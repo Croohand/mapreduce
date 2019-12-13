@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"net/url"
 
 	"github.com/Croohand/mapreduce/common/fsutil"
@@ -15,7 +14,7 @@ func existsInner(path string) bool {
 	if !fsutil.ValidateFilePath(path) {
 		log.Panic("Invalid file path " + path)
 	}
-	resp, err := http.PostForm(mrConfig.GetHost()+"/File/IsExists", url.Values{"Path": {path}})
+	resp, err := httpClient.PostForm(mrConfig.GetHost()+"/File/IsExists", url.Values{"Path": {path}})
 	if err != nil {
 		log.Panic(err)
 	}

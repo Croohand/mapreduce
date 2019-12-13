@@ -2,7 +2,6 @@ package server
 
 import (
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/Croohand/mapreduce/common/httputil"
@@ -16,7 +15,7 @@ func monitorMasters() {
 		anyActive := false
 		for _, addr := range Config.MasterAddrs[1:] {
 			var status responses.MasterStatus
-			resp, err := http.Get(addr + "/IsAlive")
+			resp, err := httpClient.Get(addr + "/IsAlive")
 			if err != nil {
 				continue
 			}

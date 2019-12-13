@@ -3,7 +3,6 @@ package server
 import (
 	"io/ioutil"
 	"log"
-	"net/http"
 	"net/url"
 
 	"github.com/Croohand/mapreduce/common/httputil"
@@ -25,7 +24,7 @@ func monitorTransactions() {
 		for _, f := range files {
 			if f.IsDir() {
 				txId := f.Name()
-				resp, err := http.PostForm(Config.MasterAddr+"/Transaction/IsAlive", url.Values{"TransactionId": {txId}})
+				resp, err := httpClient.PostForm(Config.MasterAddr+"/Transaction/IsAlive", url.Values{"TransactionId": {txId}})
 				if err != nil {
 					log.Println(wrr.Wrap(err))
 					continue

@@ -2,7 +2,6 @@ package server
 
 import (
 	"log"
-	"net/http"
 	"net/url"
 
 	"github.com/Croohand/mapreduce/common/fsutil"
@@ -31,7 +30,7 @@ func removeBlock(blockId string) error {
 		if !httputil.IsSlaveAvailable(slave) {
 			continue
 		}
-		resp, err := http.PostForm(slave+"/Block/Remove", url.Values{"BlockId": {blockId}})
+		resp, err := httpClient.PostForm(slave+"/Block/Remove", url.Values{"BlockId": {blockId}})
 		if err != nil {
 			log.Println(wrr.Wrap(err))
 			continue

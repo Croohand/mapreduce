@@ -19,6 +19,7 @@ type SlaveConfig struct {
 }
 
 var Config SlaveConfig
+var httpClient = httputil.NewClient("")
 
 func Run() {
 	if !Config.Scheduler {
@@ -67,7 +68,8 @@ func Run() {
 	mux := http.Handler(http.DefaultServeMux)
 	if Config.Env == "dev" {
 		addr = "localhost" + addr
-		mux = httputil.MuxWithLogging{Config.LoggerAddr}
+		mux = httputil.DefaultMuxWithLogging{Config.Name, Config.LoggerAddr}
+		httpClient = httputil.NewClient(Config.Name)
 	}
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		panic(err)

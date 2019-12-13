@@ -2,7 +2,6 @@ package server
 
 import (
 	"log"
-	"net/http"
 	"net/url"
 
 	"github.com/Croohand/mapreduce/common/fsutil"
@@ -39,7 +38,7 @@ func ensureBlock(blockId string) error {
 			_, has := available[slave]
 			if !has && httputil.IsSlaveAvailable(slave) {
 				for from := range available {
-					resp, err := http.PostForm(from+"/Block/Copy", url.Values{"BlockId": {blockId}, "Where": {slave}})
+					resp, err := httpClient.PostForm(from+"/Block/Copy", url.Values{"BlockId": {blockId}, "Where": {slave}})
 					if err != nil {
 						log.Println(wrr.Wrap(err))
 						continue
@@ -69,7 +68,7 @@ func ensureBlock(blockId string) error {
 			if len(available) <= getMrConfig().ReplicationFactor {
 				break
 			}
-			resp, err := http.PostForm(slave+"/Block/Remove", url.Values{"BlockId": {blockId}})
+			resp, err := httpClient.PostForm(slave+"/Block/Remove", url.Values{"BlockId": {blockId}})
 			if err != nil {
 				log.Println(wrr.Wrap(err))
 				continue

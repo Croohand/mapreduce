@@ -2,7 +2,6 @@ package httputil
 
 import (
 	"log"
-	"net/http"
 	"net/url"
 	"time"
 
@@ -24,7 +23,7 @@ func NewTxHandler() *TransactionHandler {
 }
 
 func startTransactionInner(mrHost string, paths []string, txType string, ping bool) (string, *TransactionHandler) {
-	resp, err := http.PostForm(mrHost+"/Transaction/Start", url.Values{"Paths": paths, "TransactionType": {txType}})
+	resp, err := httpClient.PostForm(mrHost+"/Transaction/Start", url.Values{"Paths": paths, "TransactionType": {txType}})
 	if err != nil {
 		log.Panic(err)
 	}
@@ -54,7 +53,7 @@ func PingTransaction(mrHost, txId string, txHandler *TransactionHandler) {
 	for {
 		select {
 		case <-txHandler.signalExit:
-			resp, err := http.PostForm(mrHost+"/Transaction/Close", url.Values{"TransactionId": {txId}})
+			resp, err := httpClient.PostForm(mrHost+"/Transaction/Close", url.Values{"TransactionId": {txId}})
 			if err != nil {
 				log.Println("Failed to close transaction: " + err.Error())
 			}
@@ -64,7 +63,7 @@ func PingTransaction(mrHost, txId string, txHandler *TransactionHandler) {
 			txHandler.signalDone <- true
 			return
 		case <-ticker.C:
-			resp, err := http.PostForm(mrHost+"/Transaction/Update", url.Values{"TransactionId": {txId}})
+			resp, err := httpClient.PostForm(mrHost+"/Transaction/Update", url.Values{"TransactionId": {txId}})
 			if err != nil {
 				log.Panic(err)
 			}

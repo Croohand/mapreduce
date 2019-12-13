@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"net/url"
 
 	"github.com/Croohand/mapreduce/common/httputil"
@@ -19,7 +18,7 @@ func readInner(blocks responses.PathBlocks, res chan<- bytes.Buffer) {
 			if !httputil.IsSlaveAvailable(slave) {
 				continue
 			}
-			resp, err := http.PostForm(slave+"/Block/Read", url.Values{"BlockId": {block.Id}})
+			resp, err := httpClient.PostForm(slave+"/Block/Read", url.Values{"BlockId": {block.Id}})
 			if err != nil {
 				log.Println(err)
 				continue
@@ -51,7 +50,7 @@ func Read(path string) {
 	}
 	_, txHandler := startReadTransaction([]string{path})
 	defer txHandler.Close()
-	resp, err := http.PostForm(mrConfig.GetHost()+"/File/Read", url.Values{"Path": {path}})
+	resp, err := httpClient.PostForm(mrConfig.GetHost()+"/File/Read", url.Values{"Path": {path}})
 	if err != nil {
 		log.Panic(err)
 	}

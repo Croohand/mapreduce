@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -12,7 +11,7 @@ import (
 )
 
 func List(prefix string) {
-	resp, err := http.PostForm(mrConfig.GetHost()+"/File/List", url.Values{"Prefix": {prefix}})
+	resp, err := httpClient.PostForm(mrConfig.GetHost()+"/File/List", url.Values{"Prefix": {prefix}})
 	if err != nil {
 		log.Panic(err)
 	}

@@ -1,6 +1,9 @@
 package server
 
-import "net/http"
+import (
+	"net/http"
+	"time"
+)
 
 func logEntryHandler(w http.ResponseWriter, r *http.Request) {
 	e := r.PostFormValue("Entry")
@@ -8,5 +11,5 @@ func logEntryHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error empty entry", http.StatusBadRequest)
 		return
 	}
-	logEntry(e)
+	logEntry(time.Now().Format("15:04:05") + " " + e)
 }

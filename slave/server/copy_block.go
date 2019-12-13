@@ -66,7 +66,7 @@ func copyFile(path, blockId, txId, where string, shuffle bool) error {
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	req.Close = true
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}

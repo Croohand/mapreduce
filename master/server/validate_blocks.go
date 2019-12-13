@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"net/url"
 
 	"github.com/Croohand/mapreduce/common/fsutil"
@@ -20,7 +19,7 @@ func validateBlocks(txId string, blocks []*fsutil.BlockInfoEx) error {
 			if !httputil.IsSlaveAvailable(slave) {
 				continue
 			}
-			resp, err := http.PostForm(slave+"/Block/Check", url.Values{"BlockId": {block.Id}, "TransactionId": {txId}})
+			resp, err := httpClient.PostForm(slave+"/Block/Check", url.Values{"BlockId": {block.Id}, "TransactionId": {txId}})
 			if err != nil {
 				log.Println(err)
 				continue
@@ -44,7 +43,7 @@ func validateBlocks(txId string, blocks []*fsutil.BlockInfoEx) error {
 			if !httputil.IsSlaveAvailable(slave) {
 				continue
 			}
-			resp, err := http.PostForm(slave+"/Block/Validate", url.Values{"BlockId": {block.Id}, "TransactionId": {txId}})
+			resp, err := httpClient.PostForm(slave+"/Block/Validate", url.Values{"BlockId": {block.Id}, "TransactionId": {txId}})
 			if err != nil {
 				log.Println(err)
 				continue

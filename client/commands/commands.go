@@ -2,7 +2,6 @@ package commands
 
 import (
 	"log"
-	"net/http"
 	"os"
 	"strings"
 
@@ -17,7 +16,7 @@ type MrConfig struct {
 
 func (cfg MrConfig) GetHost() string {
 	for _, host := range cfg.Hosts {
-		resp, err := http.Get(host + "/IsAlive")
+		resp, err := httpClient.Get(host + "/IsAlive")
 		if err != nil {
 			continue
 		}
@@ -35,10 +34,11 @@ func (cfg MrConfig) GetHost() string {
 }
 
 var mrConfig MrConfig
+var httpClient = httputil.NewClient("client")
 
 func Init() {
 	mrConfig.Hosts = strings.Split(os.Getenv("MR_HOSTS"), ",")
-	resp, err := http.Get(mrConfig.GetHost() + "/GetMrConfig")
+	resp, err := httpClient.Get(mrConfig.GetHost() + "/GetMrConfig")
 	if err != nil {
 		log.Panic("Couldn't get MR config from master, error: " + err.Error())
 	}

@@ -33,7 +33,7 @@ func doTasks(blocks responses.PathBlocks, txId string, mappers int, reducersAddr
 			if err != nil {
 				return err
 			}
-			resp, err := http.PostForm(where+"/Source/Build", url.Values{"TransactionId": {txId}})
+			resp, err := httpClient.PostForm(where+"/Source/Build", url.Values{"TransactionId": {txId}})
 			if err != nil {
 				return err
 			}
@@ -57,7 +57,7 @@ func doTasks(blocks responses.PathBlocks, txId string, mappers int, reducersAddr
 				continue
 			}
 
-			resp, err = http.PostForm(slave+"/Operation/Map", url.Values{"BlockId": {block.Id}, "TransactionId": {txId}, "Reducers": {strconv.Itoa(reducers)}})
+			resp, err = httpClient.PostForm(slave+"/Operation/Map", url.Values{"BlockId": {block.Id}, "TransactionId": {txId}, "Reducers": {strconv.Itoa(reducers)}})
 			if err != nil {
 				continue
 			}
@@ -69,7 +69,7 @@ func doTasks(blocks responses.PathBlocks, txId string, mappers int, reducersAddr
 			for i, addr := range reducersAddrs {
 				where = append(where, strconv.Itoa(i)+" "+addr)
 			}
-			resp, err = http.PostForm(slave+"/Operation/SendResults", url.Values{"BlockId": {block.Id}, "TransactionId": {txId}, "Where": where})
+			resp, err = httpClient.PostForm(slave+"/Operation/SendResults", url.Values{"BlockId": {block.Id}, "TransactionId": {txId}, "Where": where})
 			if err != nil {
 				continue
 			}
@@ -114,7 +114,7 @@ func doTasks(blocks responses.PathBlocks, txId string, mappers int, reducersAddr
 			errs <- err
 			return
 		}
-		resp, err := http.PostForm(reducer+"/Operation/Reduce", url.Values{"TransactionId": {txId}})
+		resp, err := httpClient.PostForm(reducer+"/Operation/Reduce", url.Values{"TransactionId": {txId}})
 		if err != nil {
 			errs <- err
 			return
@@ -169,7 +169,7 @@ func startMapReduceOperation(in []string, out, readTxId, txId string, mappers, r
 	go httputil.PingTransaction(Config.MasterAddr, readTxId, readTxHandler)
 	go httputil.PingTransaction(Config.MasterAddr, txId, writeTxHandler)
 
-	resp, err := http.PostForm(Config.MasterAddr+"/GetAvailableReducers", url.Values{"Number": {strconv.Itoa(reducers)}})
+	resp, err := httpClient.PostForm(Config.MasterAddr+"/GetAvailableReducers", url.Values{"Number": {strconv.Itoa(reducers)}})
 	if err != nil {
 		panic(err)
 	}
@@ -180,7 +180,7 @@ func startMapReduceOperation(in []string, out, readTxId, txId string, mappers, r
 
 	var blocks responses.PathBlocks
 	for _, path := range in {
-		resp, err = http.PostForm(Config.MasterAddr+"/File/Read", url.Values{"Path": {path}})
+		resp, err = httpClient.PostForm(Config.MasterAddr+"/File/Read", url.Values{"Path": {path}})
 		if err != nil {
 			panic(err)
 		}

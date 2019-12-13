@@ -2,7 +2,6 @@ package commands
 
 import (
 	"log"
-	"net/http"
 	"net/url"
 
 	"github.com/Croohand/mapreduce/common/fsutil"
@@ -20,7 +19,7 @@ func Remove(path string) {
 	_, txHandler := startWriteTransaction([]string{path})
 	defer txHandler.Close()
 
-	resp, err := http.PostForm(mrConfig.GetHost()+"/File/Remove", url.Values{"Path": {path}})
+	resp, err := httpClient.PostForm(mrConfig.GetHost()+"/File/Remove", url.Values{"Path": {path}})
 	if err != nil {
 		log.Panic(err)
 	}

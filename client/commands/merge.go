@@ -2,7 +2,6 @@ package commands
 
 import (
 	"log"
-	"net/http"
 	"net/url"
 
 	"github.com/Croohand/mapreduce/common/fsutil"
@@ -24,7 +23,7 @@ func Merge(in []string, out string) {
 	_, writeTxHandler := startWriteTransaction([]string{out})
 	defer writeTxHandler.Close()
 
-	resp, err := http.PostForm(mrConfig.GetHost()+"/File/Merge", url.Values{"In": in, "Out": {out}})
+	resp, err := httpClient.PostForm(mrConfig.GetHost()+"/File/Merge", url.Values{"In": in, "Out": {out}})
 	if err != nil {
 		log.Panic(err)
 	}
