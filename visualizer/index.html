@@ -29,7 +29,8 @@
     let started = false;
     let curTime;
     let prevTime;
-    let particles = [];
+    let particles;
+    let edges;
 
     window.onload = function() {
         chooser = document.getElementById('file');
@@ -170,6 +171,14 @@
                 v.col = color(200);
                 v.occupied = {};
             });
+            edges = [];
+            for (let i = 0; i < vertices.length; ++i) {
+                let g = [];
+                for (let j = 0; j < vertices.length; ++j) {
+                    g.push(0);
+                }
+                edges.push(g);
+            }
         }
     }
 
@@ -201,10 +210,12 @@
     }
 
     function newParticle(l) {
+        edges[l.from][l.to] += 1
+        edges[l.to][l.from] += 1
         let from = vertices[l.from];
         let to = vertices[l.to];
         let dir = createVector(to.x, to.y).sub(createVector(from.x, from.y));
-        let ttl = (Math.log(l.size + 1) / Math.log(10) + 5) * 30 * dir.mag() / width;
+        let ttl = (Math.log(l.size + 1) / Math.log(10) + 5) * 3 * dir.mag() / width;
         dir.div(ttl);
         if (!(l.from in to.occupied)) {
             to.occupied[l.from] = 0;
@@ -250,6 +261,17 @@
     function draw() {
         background(255);
         if (loadedLog) {
+            if (started) {
+                for (let i = 0; i < vertices.length; ++i) {
+                    for (let j = i + 1; j < vertices.length; ++j) {
+                        stroke(0, 0, 255, 255 * Math.min(edges[i][j], 5) / 5);
+                        strokeWeight(0.5 + 2 * Math.min(edges[i][j], 5) / 5);
+                        line(vertices[i].x, vertices[i].y, vertices[j].x, vertices[j].y);
+                        edges[i][j] *= 0.99;
+                    }
+                }
+            }
+
             vertices.forEach(v => v.show());
 
             if (started) {
@@ -267,12 +289,12 @@
                     prevTime = millis();
                     return;
                 }
-                let diff = (millis() - prevTime) / 100000;
-                if ((log[currentLog].ts - curTime) / diff > 150) {
-                    diff *= 130;
+                let diff = (millis() - prevTime) / 10000;
+                if ((log[currentLog].ts - curTime) / diff > 300) {
+                    diff *= 190;
                 }
                 if ((log[currentLog].ts - curTime) / diff > 60) {
-                    diff *= 40;
+                    diff *= 50;
                 }
                 curTime += diff;
                 while (currentLog < log.length && log[currentLog].ts <= curTime) {
