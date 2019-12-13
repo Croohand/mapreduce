@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/Croohand/mapreduce/common/httputil"
@@ -34,6 +38,20 @@ func RunServices() {
 	dbase.StartJournal(Config.MasterAddrs)
 }
 
+func logStatus(status string) {
+	if Config.Env != "dev" {
+		return
+	}
+	e := fmt.Sprintf("%v %v", Config.Name, status)
+	httpClient.PostForm(Config.LoggerAddr+"/LogEntry", url.Values{"Entry": {e}})
+}
+
+func cleanup() {
+	dbase.Close()
+	dbase.StopJournal()
+	logStatus("down")
+}
+
 func Run() {
 	log.Println("Opening bolt database")
 	if Config.Env == "dev" {
@@ -41,8 +59,6 @@ func Run() {
 	} else {
 		dbase.Open("")
 	}
-	defer dbase.Close()
-	defer dbase.StopJournal()
 
 	routes()
 
@@ -56,6 +72,17 @@ func Run() {
 		mux = httputil.DefaultMuxWithLogging{Config.Name, Config.LoggerAddr}
 		httpClient = httputil.NewClient(Config.Name)
 	}
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		cleanup()
+		os.Exit(1)
+	}()
+
+	logStatus("up")
+	defer cleanup()
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		panic(err)
 	}

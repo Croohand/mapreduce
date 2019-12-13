@@ -45,6 +45,7 @@ SUCCESS=0
 go install -i ../client && go install -i ../master && go install -i ../slave && go install -i ../simple_logger && SUCCESS=1
 if [[ $SUCCESS == 1 ]]
 then
+    simple_logger start -name "logger" -port 11100 -output "requests.log" -override &
     mkdir $MR_PATH
     for i in $(seq -w 1 ${SLAVES_COUNT})
     do

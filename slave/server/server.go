@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/Croohand/mapreduce/common/httputil"
 )
@@ -20,6 +23,18 @@ type SlaveConfig struct {
 
 var Config SlaveConfig
 var httpClient = httputil.NewClient("")
+
+func logStatus(status string) {
+	if Config.Env != "dev" {
+		return
+	}
+	e := fmt.Sprintf("%v %v", Config.Name, status)
+	httpClient.PostForm(Config.LoggerAddr+"/LogEntry", url.Values{"Entry": {e}})
+}
+
+func cleanup() {
+	logStatus("down")
+}
 
 func Run() {
 	if !Config.Scheduler {
@@ -71,6 +86,17 @@ func Run() {
 		mux = httputil.DefaultMuxWithLogging{Config.Name, Config.LoggerAddr}
 		httpClient = httputil.NewClient(Config.Name)
 	}
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		cleanup()
+		os.Exit(1)
+	}()
+
+	logStatus("up")
+	defer cleanup()
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		panic(err)
 	}
