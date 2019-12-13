@@ -11,5 +11,5 @@ func logEntryHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error empty entry", http.StatusBadRequest)
 		return
 	}
-	logEntry(time.Now().Format("15:04:05") + " " + e)
+	logEntry(time.Now().Format("15:04:05.9999999") + " " + e)
 }
