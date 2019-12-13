@@ -2,11 +2,25 @@ package httputil
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
 	"github.com/Croohand/mapreduce/common/wrrors"
 )
+
+type MuxWithLogging struct {
+	LoggerAddr string
+}
+
+func (m MuxWithLogging) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if m.LoggerAddr != "" {
+		e := fmt.Sprintf("%v %v %v %v", r.Host, r.URL.Path, r.RemoteAddr, r.ContentLength)
+		http.PostForm(m.LoggerAddr+"/LogEntry", url.Values{"Entry": {e}})
+	}
+	http.DefaultServeMux.ServeHTTP(w, r)
+}
 
 func writeJson(w http.ResponseWriter, obj interface{}) {
 	ans, err := json.Marshal(obj)

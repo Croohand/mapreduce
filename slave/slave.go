@@ -16,6 +16,7 @@ func main() {
 	port := startCommand.Int("port", 11001, "Port for running slave on")
 	name := startCommand.String("name", "slave", "Name for slave machine and its folder")
 	masterAddr := startCommand.String("master", "", "Master IP address")
+	loggerAddr := startCommand.String("logger", "", "Logger IP address")
 	override := startCommand.Bool("override", false, "Override config.json")
 	scheduler := startCommand.Bool("scheduler", false, "Start slave in scheduler mode")
 	commandInfo := flagutil.CommandInfo{Name: "slave", Subcommands: []*flag.FlagSet{startCommand}}
@@ -30,6 +31,7 @@ func main() {
 			Name:       *name,
 			Port:       *port,
 			MasterAddr: *masterAddr,
+			LoggerAddr: *loggerAddr,
 			Scheduler:  *scheduler,
 		}
 		osutil.Init(*name, *override, &server.Config)

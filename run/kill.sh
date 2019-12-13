@@ -3,3 +3,4 @@
 killall slave
 killall master
 killall client
+killall simple_logger

@@ -20,6 +20,7 @@ func main() {
 	slaveAddrs := startCommand.String("slaves", "", "Comma separated slaves IP addresses")
 	masterAddrs := startCommand.String("masters", "", "Comma separated masters IP addresses")
 	schedulerAddrs := startCommand.String("schedulers", "", "Comma separated scheduler slaves IP addresses")
+	loggerAddr := startCommand.String("logger", "", "Logger IP address")
 	override := startCommand.Bool("override", false, "Override config.json")
 	commandInfo := flagutil.CommandInfo{Name: "master", Subcommands: []*flag.FlagSet{startCommand}}
 
@@ -35,6 +36,7 @@ func main() {
 			SlaveAddrs:     strings.Split(*slaveAddrs, ","),
 			MasterAddrs:    strings.Split(*masterAddrs, ","),
 			SchedulerAddrs: strings.Split(*schedulerAddrs, ","),
+			LoggerAddr:     *loggerAddr,
 			LastJournalTs:  time.Now(),
 		}
 		osutil.Init(*name, *override, &server.Config)

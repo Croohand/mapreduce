@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Croohand/mapreduce/common/httputil"
 	"github.com/Croohand/mapreduce/master/server/dbase"
 )
 
@@ -16,6 +17,7 @@ type MasterConfig struct {
 	SlaveAddrs     []string
 	MasterAddrs    []string
 	SchedulerAddrs []string
+	LoggerAddr     string
 	LastJournalTs  time.Time
 }
 
@@ -43,10 +45,12 @@ func Run() {
 
 	log.Printf("Starting master server with config %+v", Config)
 	addr := fmt.Sprintf(":%d", Config.Port)
+	mux := http.Handler(http.DefaultServeMux)
 	if Config.Env == "dev" {
 		addr = "localhost" + addr
+		mux = httputil.MuxWithLogging{Config.LoggerAddr}
 	}
-	if err := http.ListenAndServe(addr, nil); err != nil {
+	if err := http.ListenAndServe(addr, mux); err != nil {
 		panic(err)
 	}
 }

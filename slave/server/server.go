@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/Croohand/mapreduce/common/httputil"
 )
 
 type SlaveConfig struct {
@@ -12,6 +14,7 @@ type SlaveConfig struct {
 	Port       int
 	Name       string
 	MasterAddr string
+	LoggerAddr string
 	Scheduler  bool
 }
 
@@ -61,10 +64,12 @@ func Run() {
 
 	log.Printf("Starting slave server with config %+v", Config)
 	addr := fmt.Sprintf(":%d", Config.Port)
+	mux := http.Handler(http.DefaultServeMux)
 	if Config.Env == "dev" {
 		addr = "localhost" + addr
+		mux = httputil.MuxWithLogging{Config.LoggerAddr}
 	}
-	if err := http.ListenAndServe(addr, nil); err != nil {
+	if err := http.ListenAndServe(addr, mux); err != nil {
 		panic(err)
 	}
 }
