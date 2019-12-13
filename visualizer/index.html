@@ -165,6 +165,7 @@
             prevTime = millis();
             particles = [];
             visualLog = [];
+            vertices.forEach(v => v.col = color(200));
         }
     }
 
@@ -196,6 +197,9 @@
     }
 
     function newParticle(l) {
+        if (l.from == l.to) {
+            return;
+        }
         let from = vertices[l.from];
         let to = vertices[l.to];
         let dir = createVector(to.x, to.y).sub(createVector(from.x, from.y));
@@ -258,7 +262,7 @@
                     text(t, width - 300, 50 + i * 15);
                 });
                 if (currentLog == log.length) return;
-                if (vertices[log[currentLog].from].isOccupied()) {
+                if (vertices[log[currentLog].from].isOccupied() || vertices[log[currentLog].to].occupied[log[currentLog].from]) {
                     prevTime = millis();
                     return;
                 }
