@@ -60,6 +60,9 @@
             if (parts.length != 5) {
                 continue;
             }
+            if (parts[2] == '/IsAlive') {
+                continue;
+            }
             res.push({
                 ts: parseTime(parts[0]),
                 to: parts[1],
@@ -147,8 +150,6 @@
                     log = parseLog(res);
                     loadedLog = true;
                     started = false;
-                    particles = [];
-                    visualLog = [];
                     button.innerText = 'Load';
                     button.disabled = false;
                     analyzeLog(log);
@@ -165,7 +166,10 @@
             prevTime = millis();
             particles = [];
             visualLog = [];
-            vertices.forEach(v => v.col = color(200));
+            vertices.forEach(v => {
+                v.col = color(200);
+                v.occupied = {};
+            });
         }
     }
 
@@ -197,13 +201,10 @@
     }
 
     function newParticle(l) {
-        if (l.from == l.to) {
-            return;
-        }
         let from = vertices[l.from];
         let to = vertices[l.to];
         let dir = createVector(to.x, to.y).sub(createVector(from.x, from.y));
-        let ttl = (Math.log(l.size + 1) / Math.log(10) + 5) * 40 * dir.mag() / width;
+        let ttl = (Math.log(l.size + 1) / Math.log(10) + 5) * 30 * dir.mag() / width;
         dir.div(ttl);
         if (!(l.from in to.occupied)) {
             to.occupied[l.from] = 0;
@@ -259,22 +260,19 @@
                     textSize(14);
                     noStroke();
                     fill(0);
-                    text(t, width - 300, 50 + i * 15);
+                    text(t, width - 330, 50 + i * 15);
                 });
                 if (currentLog == log.length) return;
                 if (vertices[log[currentLog].from].isOccupied() || vertices[log[currentLog].to].occupied[log[currentLog].from]) {
                     prevTime = millis();
                     return;
                 }
-                let diff = (millis() - prevTime) / 300000;
-                if ((log[currentLog].ts - curTime) / diff > 600) {
-                    diff *= 540;
+                let diff = (millis() - prevTime) / 100000;
+                if ((log[currentLog].ts - curTime) / diff > 150) {
+                    diff *= 130;
                 }
-                if ((log[currentLog].ts - curTime) / diff > 300) {
-                    diff *= 240;
-                }
-                if ((log[currentLog].ts - curTime) / diff > 100) {
-                    diff *= 60;
+                if ((log[currentLog].ts - curTime) / diff > 60) {
+                    diff *= 40;
                 }
                 curTime += diff;
                 while (currentLog < log.length && log[currentLog].ts <= curTime) {
@@ -288,7 +286,9 @@
                             vertices[cur.from].col = color(255, 0, 0);
                         }
                     } else {
-                        particles.push(newParticle(cur));
+                        if (cur.from != cur.to) {
+                            particles.push(newParticle(cur));
+                        }
                         text = vertices[cur.from].name + " " + cur.method + " " + vertices[cur.to].name + " " + cur.size;
                     }
                     if (visualLog.length > 30) {
