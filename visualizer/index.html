@@ -18,7 +18,7 @@
     <script type='application/javascript'>
     let log;
     let visualLog = [];
-    let currentParticle;
+    let currentLog;
     let loadedLog = false;
     let chooser;
     let canvas;
@@ -49,6 +49,14 @@
         let res = [];
         for (let i = 0; i < raw.length; ++i) {
             let parts = raw[i].split(' ');
+            if (parts.length == 3) {
+                res.push({
+                    ts: parseTime(parts[0]),
+                    to: parts[1],
+                    from: parts[1],
+                    action: parts[2],
+                });
+            }
             if (parts.length != 5) {
                 continue;
             }
@@ -97,10 +105,11 @@
                     name: s,
                     x: xy[0],
                     y: xy[1],
+                    col: color(200),
                     occupied: {},
 
                     show: function() {
-                        fill(200);
+                        fill(this.col);
                         stroke(0);
                         strokeWeight(1);
                         ellipse(this.x, this.y, 70, 70);
@@ -150,7 +159,7 @@
 
     function start() {
         if (loadedLog) {
-            currentParticle = 0;
+            currentLog = 0;
             started = true;
             curTime = log[0].ts;
             prevTime = millis();
@@ -200,7 +209,7 @@
         return {
             x: from.x,
             y: from.y,
-            sz: Math.log(l.size + 1) + 5,
+            sz: Math.log(l.size + 1) + 6,
             dir: dir,
             ttl: ttl,
             method: l.method,
@@ -213,7 +222,7 @@
                 if (this.isDead()) {
                     return;
                 }
-                fill(0, 255, 0);
+                fill(0, 0, 255);
                 stroke(0);
                 strokeWeight(1);
                 ellipse(this.x, this.y, this.sz, this.sz);
@@ -248,31 +257,41 @@
                     fill(0);
                     text(t, width - 300, 50 + i * 15);
                 });
-                if (currentParticle == log.length) return;
-                if (vertices[log[currentParticle].from].isOccupied()) {
+                if (currentLog == log.length) return;
+                if (vertices[log[currentLog].from].isOccupied()) {
                     prevTime = millis();
                     return;
                 }
                 let diff = (millis() - prevTime) / 300000;
-                if ((log[currentParticle].ts - curTime) / diff > 600) {
+                if ((log[currentLog].ts - curTime) / diff > 600) {
                     diff *= 540;
                 }
-                if ((log[currentParticle].ts - curTime) / diff > 300) {
+                if ((log[currentLog].ts - curTime) / diff > 300) {
                     diff *= 240;
                 }
-                if ((log[currentParticle].ts - curTime) / diff > 100) {
+                if ((log[currentLog].ts - curTime) / diff > 100) {
                     diff *= 60;
                 }
                 curTime += diff;
-                while (currentParticle < log.length && log[currentParticle].ts <= curTime) {
-                    let cur = log[currentParticle];
-                    particles.push(newParticle(cur));
-                    let text = vertices[cur.from].name + " " + cur.method + " " + vertices[cur.to].name + " " + cur.size; // cur.ts.toFixed(5)
+                while (currentLog < log.length && log[currentLog].ts <= curTime) {
+                    let cur = log[currentLog];
+                    let text;
+                    if ("action" in cur) {
+                        text = vertices[cur.from].name + " " + cur.action;
+                        if (cur.action == "up") {
+                            vertices[cur.from].col = color(0, 255, 0);
+                        } else {
+                            vertices[cur.from].col = color(255, 0, 0);
+                        }
+                    } else {
+                        particles.push(newParticle(cur));
+                        text = vertices[cur.from].name + " " + cur.method + " " + vertices[cur.to].name + " " + cur.size;
+                    }
                     if (visualLog.length > 30) {
                         visualLog = [];
                     }
                     visualLog.push(text);
-                    ++currentParticle;
+                    ++currentLog;
                 }
                 prevTime = millis();
             }
