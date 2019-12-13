@@ -1,0 +1,287 @@
+<head>
+    <title>Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/addons/p5.dom.min.js"></script>
+</head>
+
+<body>
+    <form method="post" enctype="multipart/form-data">
+        <div>
+            <label for="file">Choose requests log</label>
+            <input type="file" id="file" name="file">
+        </div>
+    </form>
+    <div>
+        <button onclick="loadLog()" id="button">Load</button>
+        <button onclick="start()">Start</button>
+    </div>
+    <script type='application/javascript'>
+    let log;
+    let visualLog = [];
+    let currentParticle;
+    let loadedLog = false;
+    let chooser;
+    let canvas;
+    let button;
+    let vertices;
+    let pressed = -1;
+    let period = 30;
+    let started = false;
+    let curTime;
+    let prevTime;
+    let particles = [];
+
+    window.onload = function() {
+        chooser = document.getElementById('file');
+        button = document.getElementById('button');
+    }
+
+    function parseTime(ts) {
+        let parts = ts.split(':')
+        let hh = parseInt(parts[0]);
+        let mm = parseInt(parts[1]);
+        let ss = parseFloat(parts[2]);
+        return hh * 3600 + mm * 60 + ss
+    }
+
+    function parseLog(raw) {
+        raw = raw.split('\n');
+        let res = [];
+        for (let i = 0; i < raw.length; ++i) {
+            let parts = raw[i].split(' ');
+            if (parts.length != 5) {
+                continue;
+            }
+            res.push({
+                ts: parseTime(parts[0]),
+                to: parts[1],
+                from: parts[3],
+                method: parts[2],
+                size: parts[4],
+            });
+        }
+        return res;
+    }
+
+    function genXY(name) {
+        let gen = (x1, x2, y1, y2) => {
+            x1 = 50 + (width - 100) * x1;
+            x2 = 50 + (width - 100) * x2;
+            y1 = 50 + (height - 100) * y1;
+            y2 = 50 + (height - 100) * y2;
+            return [random(x2 - x1) + x1, random(y2 - y1) + y1];
+        };
+        if (name.startsWith('client')) {
+            return gen(0, 0, 0.5, 0.5);
+        }
+        if (name.startsWith('master')) {
+            return gen(0.2, 0.3, 0.8, 1.0);
+        }
+        if (name.startsWith('scheduler')) {
+            return gen(0.2, 0.3, 0.0, 0.2);
+        }
+        if (name.startsWith('slave')) {
+            return gen(0.4, 0.6, 0.3, 0.7);
+        }
+        return gen(0, 1, 0, 1);
+    }
+
+    function analyzeLog(log) {
+        let mapping = {};
+        vertices = [];
+        let check = function(s) {
+            if (!(s in mapping)) {
+                mapping[s] = vertices.length;
+                let xy = genXY(s);
+                vertices.push({
+                    name: s,
+                    x: xy[0],
+                    y: xy[1],
+                    occupied: {},
+
+                    show: function() {
+                        fill(200);
+                        stroke(0);
+                        strokeWeight(1);
+                        ellipse(this.x, this.y, 70, 70);
+                        textSize(12);
+                        textAlign(CENTER);
+                        noStroke();
+                        fill(0);
+                        text(this.name, this.x, this.y);
+                    },
+
+                    isOccupied: function() {
+                        let res = 0;
+                        for (let v in this.occupied) {
+                            res += this.occupied[v];
+                        }
+                        return res > 0;
+                    },
+                });
+            }
+        };
+        for (let i = 0; i < log.length; ++i) {
+            check(log[i].from);
+            check(log[i].to);
+            log[i].from = mapping[log[i].from];
+            log[i].to = mapping[log[i].to];
+        }
+    }
+
+    function loadLog() {
+        if (chooser.files.length > 0) {
+            button.innerText = 'Loading log...';
+            button.disabled = true;
+            setTimeout(function() {
+                chooser.files[0].text().then((res) => {
+                    log = parseLog(res);
+                    loadedLog = true;
+                    started = false;
+                    particles = [];
+                    visualLog = [];
+                    button.innerText = 'Load';
+                    button.disabled = false;
+                    analyzeLog(log);
+                });
+            }, 1000);
+        }
+    }
+
+    function start() {
+        if (loadedLog) {
+            currentParticle = 0;
+            started = true;
+            curTime = log[0].ts;
+            prevTime = millis();
+            particles = [];
+            visualLog = [];
+        }
+    }
+
+    function mousePressed() {
+        if (vertices) {
+            vertices.forEach((v, i) => {
+                if (mouseX >= v.x - 30 && mouseX <= v.x + 30 && mouseY >= v.y - 30 && mouseY <= v.y + 30) {
+                    pressed = i;
+                }
+            });
+        }
+    }
+
+    function mouseReleased() {
+        pressed = -1;
+    }
+
+    function mouseDragged() {
+        if (vertices && pressed != -1) {
+            vertices[pressed].x = mouseX;
+            vertices[pressed].y = mouseY;
+        }
+    }
+
+    function setup() {
+        canvas = createCanvas(800, 500);
+
+        background(255);
+    }
+
+    function newParticle(l) {
+        let from = vertices[l.from];
+        let to = vertices[l.to];
+        let dir = createVector(to.x, to.y).sub(createVector(from.x, from.y));
+        let ttl = (Math.log(l.size + 1) / Math.log(10) + 5) * 40 * dir.mag() / width;
+        dir.div(ttl);
+        if (!(l.from in to.occupied)) {
+            to.occupied[l.from] = 0;
+        }
+        to.occupied[l.from] += 1;
+
+        return {
+            x: from.x,
+            y: from.y,
+            sz: Math.log(l.size + 1) + 5,
+            dir: dir,
+            ttl: ttl,
+            method: l.method,
+
+            isDead: function() {
+                return this.ttl < 0;
+            },
+
+            show: function() {
+                if (this.isDead()) {
+                    return;
+                }
+                fill(0, 255, 0);
+                stroke(0);
+                strokeWeight(1);
+                ellipse(this.x, this.y, this.sz, this.sz);
+            },
+
+            update: function() {
+                if (this.isDead()) {
+                    return;
+                }
+                this.x += this.dir.x;
+                this.y += this.dir.y;
+                --this.ttl;
+                if (this.isDead()) {
+                    to.occupied[l.from] -= 1;
+                }
+            },
+        };
+    }
+
+    function draw() {
+        background(255);
+        if (loadedLog) {
+            vertices.forEach(v => v.show());
+
+            if (started) {
+                particles.forEach(p => p.show());
+                particles.forEach(p => p.update());
+                visualLog.forEach((t, i) => {
+                    textAlign(LEFT);
+                    textSize(14);
+                    noStroke();
+                    fill(0);
+                    text(t, width - 300, 50 + i * 15);
+                });
+                if (currentParticle == log.length) return;
+                if (vertices[log[currentParticle].from].isOccupied()) {
+                    prevTime = millis();
+                    return;
+                }
+                let diff = (millis() - prevTime) / 300000;
+                if ((log[currentParticle].ts - curTime) / diff > 600) {
+                    diff *= 540;
+                }
+                if ((log[currentParticle].ts - curTime) / diff > 300) {
+                    diff *= 240;
+                }
+                if ((log[currentParticle].ts - curTime) / diff > 100) {
+                    diff *= 60;
+                }
+                curTime += diff;
+                while (currentParticle < log.length && log[currentParticle].ts <= curTime) {
+                    let cur = log[currentParticle];
+                    particles.push(newParticle(cur));
+                    let text = vertices[cur.from].name + " " + cur.method + " " + vertices[cur.to].name + " " + cur.size; // cur.ts.toFixed(5)
+                    if (visualLog.length > 30) {
+                        visualLog = [];
+                    }
+                    visualLog.push(text);
+                    ++currentParticle;
+                }
+                prevTime = millis();
+            }
+        }
+    }
+
+    // function windowResized() {
+    //     resizeCanvas(windowWidth, windowHeight);
+    // }
+
+    </script>
+</body>
