@@ -10,7 +10,7 @@ import (
 func getAvailableScheduler() (string, error) {
 	for _, i := range rand.Perm(len(Config.SchedulerAddrs)) {
 		addr := Config.SchedulerAddrs[i]
-		if httputil.IsSlaveAvailable(addr) {
+		if httputil.IsSlaveAvailableWithSwitch(addr, Config.MasterAddrs[0]) {
 			return addr, nil
 		}
 	}
