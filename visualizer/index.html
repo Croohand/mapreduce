@@ -237,7 +237,7 @@
 
     function setup() {
         createCanvas(800, 500);
-
+        frameRate(120);
         background(255);
     }
 
@@ -247,7 +247,7 @@
         let from = vertices[l.from];
         let to = vertices[l.to];
         let dir = createVector(to.x, to.y).sub(createVector(from.x, from.y));
-        let ttl = (Math.log(l.size + 1) / Math.log(10) + 5) * 3 * dir.mag() / width;
+        let ttl = (Math.log(l.size + 1) / Math.log(10) + 5) * 2 * dir.mag() / width;
         dir.div(ttl);
         if (!(l.from in to.occupied)) {
             to.occupied[l.from] = 0;
@@ -291,12 +291,12 @@
     }
 
     function updateTime() {
-        let diff = 1 / 600;
+        let diff = 1 / 60 / 7.5;
         if ((log[currentLog].ts - curTime) / diff > 300) {
-            diff *= 190;
+            diff *= 195;
         }
         if ((log[currentLog].ts - curTime) / diff > 60) {
-            diff *= 50;
+            diff *= 55;
         }
         curTime += diff;
         while (currentLog < log.length && log[currentLog].ts <= curTime) {
@@ -325,6 +325,9 @@
 
     function draw() {
         background(255);
+        strokeWeight(1);
+        stroke(200, 200, 200, 150);
+        line(width - 340, 0, width - 340, height);
         if (loadedLog) {
             if (started) {
                 for (let i = 0; i < vertices.length; ++i) {
@@ -332,7 +335,7 @@
                         stroke(0, 0, 255, 255 * Math.min(edges[i][j], 5) / 5);
                         strokeWeight(0.5 + 2 * Math.min(edges[i][j], 5) / 5);
                         line(vertices[i].x, vertices[i].y, vertices[j].x, vertices[j].y);
-                        edges[i][j] *= 0.99;
+                        edges[i][j] *= 0.993;
                     }
                 }
             }
