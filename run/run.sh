@@ -70,6 +70,7 @@ then
     done
     if [[ $1 == 0 ]]; then
         $(go env GOPATH)/bin/master start -name "master1" -port $MASTERS_PORT -masters $(get_masters 1) -slaves $SLAVES -schedulers $SCHEDULERS -logger http://localhost:11100 -override &
+        sleep 5
         $(go env GOPATH)/bin/master start -name "master2" -port $(($MASTERS_PORT+1)) -masters $(get_masters 2) -slaves $SLAVES -schedulers $SCHEDULERS -logger http://localhost:11100 -override &
         $(go env GOPATH)/bin/master start -name "master3" -port $(($MASTERS_PORT+2)) -masters $(get_masters 3) -slaves $SLAVES -schedulers $SCHEDULERS -logger http://localhost:11100 -override &
     else
