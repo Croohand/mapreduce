@@ -56,19 +56,21 @@ func PingTransaction(mrHost, txId string, txHandler *TransactionHandler) {
 			resp, err := httpClient.PostForm(mrHost+"/Transaction/Close", url.Values{"TransactionId": {txId}})
 			if err != nil {
 				log.Println("Failed to close transaction: " + err.Error())
-			}
-			if err := GetError(resp); err != nil {
-				log.Println("Failed to close transaction: " + err.Error())
+			} else {
+				if err := GetError(resp); err != nil {
+					log.Println("Failed to close transaction: " + err.Error())
+				}
 			}
 			txHandler.signalDone <- true
 			return
 		case <-ticker.C:
 			resp, err := httpClient.PostForm(mrHost+"/Transaction/Update", url.Values{"TransactionId": {txId}})
 			if err != nil {
-				log.Panic(err)
+				log.Println("Failed to update transaction: " + err.Error())
+				continue
 			}
 			if err := GetError(resp); err != nil {
-				log.Panic(err)
+				log.Println("Failed to update transaction: " + err.Error())
 			}
 		}
 	}
