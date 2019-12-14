@@ -34,10 +34,12 @@ func (cfg MrConfig) GetHost() string {
 }
 
 var mrConfig MrConfig
-var httpClient = httputil.NewClient("client")
+var httpClient httputil.ClientWithLogging
 
 func Init() {
 	mrConfig.Hosts = strings.Split(os.Getenv("MR_HOSTS"), ",")
+	name := os.Getenv("MR_CLIENT")
+	httpClient = httputil.NewClient(name)
 	resp, err := httpClient.Get(mrConfig.GetHost() + "/GetMrConfig")
 	if err != nil {
 		log.Panic("Couldn't get MR config from master, error: " + err.Error())
