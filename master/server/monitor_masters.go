@@ -10,8 +10,8 @@ import (
 )
 
 func monitorMasters() {
-	timeutil.Sleep(time.Second * 5)
 	for {
+		timeutil.Sleep(time.Second * 3)
 		anyActive := false
 		for _, addr := range Config.MasterAddrs[1:] {
 			var status responses.MasterStatus
@@ -33,6 +33,5 @@ func monitorMasters() {
 			go RunServices()
 			return
 		}
-		timeutil.Sleep(time.Second * 3)
 	}
 }
