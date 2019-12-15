@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 MASTERS_PORT=11000
-MASTERS_COUNT=3
+MASTERS_COUNT=1
 SLAVES_PORT=$((${MASTERS_PORT} + $MASTERS_COUNT))
 SLAVES_COUNT=5
 SCHEDULERS_PORT=$((${SLAVES_PORT} + $SLAVES_COUNT))
-SCHEDULERS_COUNT=2
+SCHEDULERS_COUNT=1
 
 function get_slaves() {
     RES=""
@@ -68,14 +68,12 @@ then
             $(go env GOPATH)/bin/slave start -name "scheduler$i" &
         fi
     done
-    if [[ $1 == 0 ]]; then
-        $(go env GOPATH)/bin/master start -name "master1" -port $MASTERS_PORT -masters $(get_masters 1) -slaves $SLAVES -schedulers $SCHEDULERS -logger http://localhost:11100 -override &
-        sleep 5
-        $(go env GOPATH)/bin/master start -name "master2" -port $(($MASTERS_PORT+1)) -masters $(get_masters 2) -slaves $SLAVES -schedulers $SCHEDULERS -logger http://localhost:11100 -override &
-        $(go env GOPATH)/bin/master start -name "master3" -port $(($MASTERS_PORT+2)) -masters $(get_masters 3) -slaves $SLAVES -schedulers $SCHEDULERS -logger http://localhost:11100 -override &
-    else
-        $(go env GOPATH)/bin/master start -name "master1" &
-        $(go env GOPATH)/bin/master start -name "master2" &
-        $(go env GOPATH)/bin/master start -name "master3" &
-    fi
+    for i in $(seq -w 1 ${MASTERS_COUNT})
+    do
+        if [[ $1 == 0 ]]; then
+            $(go env GOPATH)/bin/master start -name "master$i" -port $MASTERS_PORT -masters $(get_masters $i) -slaves $SLAVES -schedulers $SCHEDULERS -logger http://localhost:11100 -override &
+        else
+            $(go env GOPATH)/bin/master start -name "master$i" &
+        fi
+    done
 fi
