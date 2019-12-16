@@ -28,9 +28,9 @@ func Partition(key string, reducers int) int {
 	return rand.Intn(reducers)
 }
 
-func Reduce(in <-chan Entry, out chan<- string) {
-	for entry := range in {
-		out <- entry.Value
+func Reduce(key string, in <-chan string, out chan<- string) {
+	for val := range in {
+		out <- val
 	}
 	close(out)
 }

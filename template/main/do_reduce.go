@@ -26,7 +26,7 @@ func (ch *chunk) nextEntry() bool {
 	if len(toks) != 2 {
 		panic("Bad entry " + line)
 	}
-	ch.curEntry = mruserlib.Entry{toks[0], toks[1]}
+	ch.curEntry = mruserlib.Entry{Key: toks[0], Value: toks[1]}
 	return true
 }
 
@@ -91,7 +91,7 @@ func doReduce() {
 		}
 	}
 	prevKey := ""
-	var in chan mruserlib.Entry
+	var in chan string
 	var out chan string
 	var done chan bool
 	for pq.Len() > 0 {
@@ -102,13 +102,13 @@ func doReduce() {
 				<-done
 			}
 			prevKey = ch.curEntry.Key
-			in = make(chan mruserlib.Entry)
+			in = make(chan string)
 			out = make(chan string)
 			done = make(chan bool)
-			go mruserlib.Reduce(in, out)
+			go mruserlib.Reduce(prevKey, in, out)
 			go fetchReduceOutput(out, done)
 		}
-		in <- ch.curEntry
+		in <- ch.curEntry.Value
 		if ch.nextEntry() {
 			heap.Push(&pq, ch)
 		}

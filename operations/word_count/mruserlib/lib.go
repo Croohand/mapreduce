@@ -50,17 +50,15 @@ func prependZeros(s string) string {
 	return strings.Repeat("0", 9-len(s)) + s
 }
 
-func Reduce(in <-chan Entry, out chan<- string) {
-	wordsCount := map[string]int{}
-	for entry := range in {
-		count, err := strconv.Atoi(entry.Value)
+func Reduce(key string, in <-chan string, out chan<- string) {
+	res := 0
+	for val := range in {
+		count, err := strconv.Atoi(val)
 		if err != nil {
 			continue
 		}
-		wordsCount[entry.Key] += count
+		res += count
 	}
-	for word, count := range wordsCount {
-		out <- prependZeros(strconv.Itoa(count)) + ": " + word
-	}
+	out <- prependZeros(strconv.Itoa(res)) + ": " + key
 	close(out)
 }
