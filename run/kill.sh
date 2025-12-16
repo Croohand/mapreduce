@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-killall slave
-killall master
+killall worker
+killall coordinator
 killall client
 killall simple_logger

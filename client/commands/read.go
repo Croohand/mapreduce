@@ -14,11 +14,11 @@ import (
 func readInner(blocks responses.PathBlocks, res chan<- bytes.Buffer) {
 	for _, block := range blocks {
 		any := false
-		for _, slave := range block.Slaves {
-			if !httputil.IsSlaveAvailable(slave) {
+		for _, worker := range block.Workers {
+			if !httputil.IsWorkerAvailable(worker) {
 				continue
 			}
-			resp, err := httpClient.PostForm(slave+"/Block/Read", url.Values{"BlockId": {block.Id}})
+			resp, err := httpClient.PostForm(worker+"/Block/Read", url.Values{"BlockId": {block.Id}})
 			if err != nil {
 				log.Println(err)
 				continue
@@ -38,7 +38,7 @@ func readInner(blocks responses.PathBlocks, res chan<- bytes.Buffer) {
 			break
 		}
 		if !any {
-			log.Panic("No available slaves for block " + block.Id)
+			log.Panic("No available workers for block " + block.Id)
 		}
 	}
 	close(res)

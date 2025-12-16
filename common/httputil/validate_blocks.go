@@ -59,15 +59,15 @@ func TryValidateBlocks(mrHost, txId string, blocks []fsutil.BlockInfoEx) error {
 func CleanUp(txId string, blocks []fsutil.BlockInfoEx) {
 	all := map[string]struct{}{}
 	for _, block := range blocks {
-		for _, slave := range block.Slaves {
-			all[slave] = struct{}{}
+		for _, worker := range block.Workers {
+			all[worker] = struct{}{}
 		}
 	}
-	for slave := range all {
-		if !IsSlaveAvailable(slave) {
+	for worker := range all {
+		if !IsWorkerAvailable(worker) {
 			continue
 		}
-		resp, err := httpClient.PostForm(slave+"/Transaction/Remove", url.Values{"TransactionId": {txId}})
+		resp, err := httpClient.PostForm(worker+"/Transaction/Remove", url.Values{"TransactionId": {txId}})
 		if err != nil {
 			continue
 		}

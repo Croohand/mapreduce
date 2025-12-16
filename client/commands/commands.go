@@ -20,7 +20,7 @@ func (cfg MrConfig) GetHost() string {
 		if err != nil {
 			continue
 		}
-		var status responses.MasterStatus
+		var status responses.CoordinatorStatus
 		err = httputil.GetJson(resp, &status)
 		if err != nil {
 			continue
@@ -29,7 +29,7 @@ func (cfg MrConfig) GetHost() string {
 			return host
 		}
 	}
-	log.Panic("No master available")
+	log.Panic("No coordinator available")
 	return ""
 }
 
@@ -42,9 +42,9 @@ func Init() {
 	httpClient = httputil.NewClient(name)
 	resp, err := httpClient.Get(mrConfig.GetHost() + "/GetMrConfig")
 	if err != nil {
-		log.Panic("Couldn't get MR config from master, error: " + err.Error())
+		log.Panic("Couldn't get MR config from coordinator, error: " + err.Error())
 	}
 	if err := httputil.GetJson(resp, &mrConfig); err != nil {
-		log.Panic("Couldn't get MR config from master, error: " + err.Error())
+		log.Panic("Couldn't get MR config from coordinator, error: " + err.Error())
 	}
 }

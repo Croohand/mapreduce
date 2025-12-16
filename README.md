@@ -8,7 +8,7 @@ This project implements a fully functional distributed computing system featurin
 
 - **Distributed File System**: HDFS-like architecture with data blocks, replication, and fault tolerance
 - **MapReduce Engine**: Execute custom Map and Reduce operations across distributed data
-- **Master-Slave Architecture**: Coordinated cluster management with leader election
+- **Coordinator-Worker Architecture**: Coordinated cluster management with leader election
 - **Scheduler**: Dedicated scheduler nodes for orchestrating MapReduce jobs
 - **Visualizer**: Real-time visualization of cluster activity and request flows
 
@@ -22,11 +22,11 @@ This project implements a fully functional distributed computing system featurin
                                      │
                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              MASTER NODES                                    │
-│    ┌──────────┐    ┌──────────┐    ┌──────────┐                            │
-│    │ Master 1 │◄──►│ Master 2 │◄──►│ Master 3 │   (Journal replication)    │
-│    │ (Active) │    │(Passive) │    │(Passive) │                            │
-│    └──────────┘    └──────────┘    └──────────┘                            │
+│                           COORDINATOR NODES                                  │
+│    ┌────────────┐  ┌────────────┐  ┌────────────┐                          │
+│    │Coordinator1│◄►│Coordinator2│◄►│Coordinator3│  (Journal replication)   │
+│    │  (Active)  │  │ (Passive)  │  │ (Passive)  │                          │
+│    └────────────┘  └────────────┘  └────────────┘                          │
 │         │                                                                    │
 │         ├── Metadata management (BoltDB)                                    │
 │         ├── Block placement & replication                                   │
@@ -36,7 +36,7 @@ This project implements a fully functional distributed computing system featurin
                ┌─────────────────────┼─────────────────────┐
                ▼                     ▼                     ▼
 ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────┐
-│     SCHEDULER(S)     │  │      SLAVE NODES     │  │   SIMPLE LOGGER  │
+│     SCHEDULER(S)     │  │     WORKER NODES     │  │   SIMPLE LOGGER  │
 │                      │  │                      │  │                  │
 │  • Job orchestration │  │  • Block storage     │  │  • Request       │
 │  • Map/Reduce        │  │  • Map execution     │  │    logging       │
@@ -47,28 +47,28 @@ This project implements a fully functional distributed computing system featurin
 
 ## Components
 
-### Master
+### Coordinator
 
-The master node manages:
+The coordinator node manages:
 - **Metadata Storage**: File paths to block mappings (using BoltDB)
 - **Block Management**: Block placement, replication tracking, and recovery
 - **Transaction Coordination**: ACID-like transactions for file operations
 - **Leader Election**: Active/passive mode with automatic failover
-- **Journal Replication**: Write-ahead logging replicated to passive masters
+- **Journal Replication**: Write-ahead logging replicated to passive coordinators
 
-### Slave
+### Worker
 
 Worker nodes responsible for:
 - **Block Storage**: Storing and serving data blocks
 - **Map Operations**: Executing user-defined Map functions on local data
 - **Reduce Operations**: Executing user-defined Reduce functions
-- **Block Replication**: Copying blocks to other slaves for fault tolerance
+- **Block Replication**: Copying blocks to other workers for fault tolerance
 
 ### Scheduler
 
 Dedicated nodes for MapReduce job orchestration:
-- **Job Preparation**: Setting up transactions and coordinating with master
-- **Task Distribution**: Assigning map tasks to slaves with data locality
+- **Job Preparation**: Setting up transactions and coordinating with coordinator
+- **Task Distribution**: Assigning map tasks to workers with data locality
 - **Shuffle Phase**: Coordinating data movement between mappers and reducers
 - **Progress Tracking**: Monitoring operation status
 
@@ -108,8 +108,8 @@ cd mapreduce
 
 # Install all components
 go install ./client
-go install ./master
-go install ./slave
+go install ./coordinator
+go install ./worker
 go install ./simple_logger
 ```
 
@@ -121,7 +121,7 @@ Set the `MR_PATH` environment variable for data storage:
 
 ```bash
 export MR_PATH=/path/to/mapreduce/data
-export MR_HOSTS=http://localhost:11000  # Comma-separated master addresses
+export MR_HOSTS=http://localhost:11000  # Comma-separated coordinator addresses
 export MR_CLIENT=client1  # Client identifier for logging
 ```
 
@@ -137,8 +137,8 @@ cd run
 ```
 
 This starts:
-- 1 Master node (port 11000)
-- 5 Slave nodes (ports 11001-11005)
+- 1 Coordinator node (port 11000)
+- 5 Worker nodes (ports 11001-11005)
 - 1 Scheduler (port 11006)
 - 1 Logger (port 11100)
 
@@ -277,28 +277,28 @@ Shuffles and merges key-value pairs.
 
 ## Configuration
 
-### Master Configuration
+### Coordinator Configuration
 
 ```bash
-master start \
-  -name master1 \
+coordinator start \
+  -name coordinator1 \
   -port 11000 \
   -env dev \
-  -slaves http://localhost:11001,http://localhost:11002 \
-  -masters http://localhost:11000,http://localhost:11010 \
+  -workers http://localhost:11001,http://localhost:11002 \
+  -coordinators http://localhost:11000,http://localhost:11010 \
   -schedulers http://localhost:11006 \
   -logger http://localhost:11100 \
   -override  # Override existing config
 ```
 
-### Slave Configuration
+### Worker Configuration
 
 ```bash
-slave start \
-  -name slave1 \
+worker start \
+  -name worker1 \
   -port 11001 \
   -env dev \
-  -master http://localhost:11000 \
+  -coordinator http://localhost:11000 \
   -logger http://localhost:11100 \
   -override
 ```
@@ -306,11 +306,11 @@ slave start \
 ### Scheduler Configuration
 
 ```bash
-slave start \
+worker start \
   -name scheduler1 \
   -port 11006 \
   -env dev \
-  -master http://localhost:11000 \
+  -coordinator http://localhost:11000 \
   -logger http://localhost:11100 \
   -scheduler  # Enable scheduler mode
   -override
@@ -322,19 +322,19 @@ The system uses these configurable parameters:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `MaxRowLength` | Maximum length of a single row | Configured on master |
-| `BlockSize` | Target size for data blocks (bytes) | Configured on master |
-| `ReplicationFactor` | Number of block replicas | Configured on master |
+| `MaxRowLength` | Maximum length of a single row | Configured on coordinator |
+| `BlockSize` | Target size for data blocks (bytes) | Configured on coordinator |
+| `ReplicationFactor` | Number of block replicas | Configured on coordinator |
 
 ## API Endpoints
 
-### Master Endpoints
+### Coordinator Endpoints
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /IsAlive` | Check master status (active/passive) |
+| `GET /IsAlive` | Check coordinator status (active/passive) |
 | `GET /GetMrConfig` | Get system configuration |
-| `GET /GetAvailableSlaves` | Get list of available slave nodes |
+| `GET /GetAvailableWorkers` | Get list of available worker nodes |
 | `POST /GetAvailableReducers` | Get reducer nodes for MapReduce |
 | `POST /GetAvailableScheduler` | Get an available scheduler |
 | `POST /Transaction/Start` | Start a new transaction |
@@ -347,7 +347,7 @@ The system uses these configurable parameters:
 | `GET /File/List` | List files by prefix |
 | `GET /File/IsExists` | Check if file exists |
 
-### Slave Endpoints
+### Worker Endpoints
 
 | Endpoint | Description |
 |----------|-------------|
@@ -373,14 +373,14 @@ The system uses these configurable parameters:
 
 ## Fault Tolerance
 
-### Master Failover
-- Multiple master nodes with active/passive roles
+### Coordinator Failover
+- Multiple coordinator nodes with active/passive roles
 - Journal replication for metadata consistency
-- Automatic leader election on active master failure
+- Automatic leader election on active coordinator failure
 
 ### Block Replication
 - Configurable replication factor
-- Automatic re-replication when slaves fail
+- Automatic re-replication when workers fail
 - Background monitoring of block health
 
 ### Transaction Management
@@ -410,12 +410,12 @@ mapreduce/
 ├── client/           # CLI client
 │   ├── client.go     # Main entry point
 │   └── commands/     # Command implementations
-├── master/           # Master node
-│   ├── master.go     # Main entry point
+├── coordinator/      # Coordinator node
+│   ├── coordinator.go # Main entry point
 │   └── server/       # HTTP handlers and core logic
 │       └── dbase/    # BoltDB wrapper and journaling
-├── slave/            # Slave node
-│   ├── slave.go      # Main entry point
+├── worker/           # Worker node
+│   ├── worker.go     # Main entry point
 │   └── server/       # HTTP handlers and operations
 ├── common/           # Shared utilities
 │   ├── fsutil/       # File system utilities

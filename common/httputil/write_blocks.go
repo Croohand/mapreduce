@@ -47,17 +47,17 @@ func sendBlock(mrHost, txId string, cur bytes.Buffer, lower, upper int) (block *
 
 	w.Close()
 
-	resp, err := httpClient.Get(mrHost + "/GetAvailableSlaves")
+	resp, err := httpClient.Get(mrHost + "/GetAvailableWorkers")
 	if err != nil {
 		return
 	}
-	var slaves []string
-	if err = GetJson(resp, &slaves); err != nil {
+	var workers []string
+	if err = GetJson(resp, &workers); err != nil {
 		return
 	}
-	block.Slaves = slaves
-	initialSlave := block.Slaves[0]
-	req, err := http.NewRequest("POST", initialSlave+"/Block/Write", &b)
+	block.Workers = workers
+	initialWorker := block.Workers[0]
+	req, err := http.NewRequest("POST", initialWorker+"/Block/Write", &b)
 	if err != nil {
 		return
 	}
@@ -70,8 +70,8 @@ func sendBlock(mrHost, txId string, cur bytes.Buffer, lower, upper int) (block *
 	if err = GetError(resp); err != nil {
 		return
 	}
-	for _, addr := range block.Slaves[1:] {
-		resp, err = httpClient.PostForm(initialSlave+"/Block/Copy", url.Values{"TransactionId": {txId}, "BlockId": {block.Id}, "Where": {addr}})
+	for _, addr := range block.Workers[1:] {
+		resp, err = httpClient.PostForm(initialWorker+"/Block/Copy", url.Values{"TransactionId": {txId}, "BlockId": {block.Id}, "Where": {addr}})
 		if err != nil {
 			return
 		}

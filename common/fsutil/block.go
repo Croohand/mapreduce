@@ -9,7 +9,7 @@ import (
 
 type BlockInfo struct {
 	Lower, Upper int
-	Slaves       []string
+	Workers      []string
 }
 
 type BlockInfoEx struct {

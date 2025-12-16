@@ -118,13 +118,13 @@
         if (name.startsWith('client')) {
             return gen(0, 0, 0.5, 0.5);
         }
-        if (name.startsWith('master')) {
+        if (name.startsWith('coordinator')) {
             return gen(0.2, 0.3, 0.8, 1.0);
         }
         if (name.startsWith('scheduler')) {
             return gen(0.2, 0.3, 0.0, 0.2);
         }
-        if (name.startsWith('slave')) {
+        if (name.startsWith('worker')) {
             return gen(0.4, 0.6, 0.3, 0.7);
         }
         return gen(0, 1, 0, 1);

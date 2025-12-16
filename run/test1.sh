@@ -1,28 +1,28 @@
 rm /Users/therion/.mapreduce/logger/requests.log
 simple_logger start &
 
-master start -name master1 &
+coordinator start -name coordinator1 &
 m1=$!
 sleep 5
-master start -name master2 &
+coordinator start -name coordinator2 &
 m2=$!
-master start -name master3 &
+coordinator start -name coordinator3 &
 m3=$!
 
-slave start -name scheduler1 &
+worker start -name scheduler1 &
 h1=$!
-slave start -name scheduler2 &
+worker start -name scheduler2 &
 h2=$!
 
-slave start -name slave1 &
+worker start -name worker1 &
 s1=$!
-slave start -name slave2 &
+worker start -name worker2 &
 s2=$!
-slave start -name slave3 &
+worker start -name worker3 &
 s3=$!
-slave start -name slave4 &
+worker start -name worker4 &
 s4=$!
-slave start -name slave5 &
+worker start -name worker5 &
 s5=$!
 
 sleep 2
