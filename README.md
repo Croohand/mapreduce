@@ -16,21 +16,21 @@ This project implements a fully functional distributed computing system featurin
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                                 CLIENT                                       │
+│                                 CLIENT                                      │
 │                   (read, write, mapreduce, list, etc.)                      │
 └─────────────────────────────────────────────────────────────────────────────┘
                                      │
                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           COORDINATOR NODES                                  │
-│    ┌────────────┐  ┌────────────┐  ┌────────────┐                          │
-│    │Coordinator1│◄►│Coordinator2│◄►│Coordinator3│  (Journal replication)   │
-│    │  (Active)  │  │ (Passive)  │  │ (Passive)  │                          │
-│    └────────────┘  └────────────┘  └────────────┘                          │
-│         │                                                                    │
-│         ├── Metadata management (BoltDB)                                    │
-│         ├── Block placement & replication                                   │
-│         └── Transaction coordination                                        │
+│                           COORDINATOR NODES                                 │
+│    ┌────────────┐  ┌────────────┐  ┌────────────┐                           │
+│    │Coordinator2│◄►│Coordinator1│◄►│Coordinator3│  (Journal replication)    │
+│    │  (Passive) │  │ (Active)   │  │ (Passive)  │                           │
+│    └────────────┘  └────────────┘  └────────────┘                           │
+│                           │                                                 │
+│                           ├── Metadata management (BoltDB)                  │
+│                           ├── Block placement & replication                 │
+│                           └── Transaction coordination                      │
 └─────────────────────────────────────────────────────────────────────────────┘
                                      │
                ┌─────────────────────┼─────────────────────┐
@@ -38,10 +38,10 @@ This project implements a fully functional distributed computing system featurin
 ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────┐
 │     SCHEDULER(S)     │  │     WORKER NODES     │  │   SIMPLE LOGGER  │
 │                      │  │                      │  │                  │
-│  • Job orchestration │  │  • Block storage     │  │  • Request       │
-│  • Map/Reduce        │  │  • Map execution     │  │    logging       │
-│    coordination      │  │  • Reduce execution  │  │  • Visualization │
-│  • Status tracking   │  │  • Data replication  │  │    support       │
+│  • Map/Reduce        │  │  • Block storage     │  │  • Request       │
+│    orchestration     │  │  • Map/Reduce        │  │    logging       │
+│  • Status tracking   │  │    execution         │  │                  │
+│                      │  │  • Data replication  │  │                  │
 └──────────────────────┘  └──────────────────────┘  └──────────────────┘
 ```
 
@@ -54,7 +54,7 @@ The coordinator node manages:
 - **Block Management**: Block placement, replication tracking, and recovery
 - **Transaction Coordination**: ACID-like transactions for file operations
 - **Leader Election**: Active/passive mode with automatic failover
-- **Journal Replication**: Write-ahead logging replicated to passive coordinators
+- **Journal Replication**: Asynchronous journal replication to passive coordinators
 
 ### Worker
 
@@ -107,22 +107,28 @@ git clone https://github.com/Croohand/mapreduce.git
 cd mapreduce
 
 # Install all components
-go install ./client
-go install ./coordinator
-go install ./worker
-go install ./simple_logger
+go install ./client ./coordinator ./worker ./simple_logger
 ```
 
-The binaries will be installed to `$GOPATH/bin` (or `$HOME/go/bin` by default).
+The binaries will be installed to `$GOPATH/bin` (or `$HOME/go/bin` by default). Make sure this directory is in your `PATH`:
+
+```bash
+export PATH=$PATH:$(go env GOPATH)/bin
+```
 
 ### Environment Setup
 
-Set the `MR_PATH` environment variable for data storage:
+Configure the required environment variables:
 
 ```bash
+# Required: Data storage directory for cluster nodes
 export MR_PATH=/path/to/mapreduce/data
-export MR_HOSTS=http://localhost:11000  # Comma-separated coordinator addresses
-export MR_CLIENT=client1  # Client identifier for logging
+
+# Required for client: Comma-separated coordinator addresses
+export MR_HOSTS=http://localhost:11000,http://localhost:11001,http://localhost:11002
+
+# Optional: Client identifier for logging/visualization
+export MR_CLIENT=client1
 ```
 
 ## Quick Start
@@ -133,19 +139,58 @@ Use the provided run script for local development:
 
 ```bash
 cd run
-./run.sh 0  # Start with logging enabled
+./run.sh 0  # Argument 0 overrides nodes configs
 ```
 
 This starts:
-- 1 Coordinator node (port 11000)
-- 5 Worker nodes (ports 11001-11005)
-- 1 Scheduler (port 11006)
+- 3 Coordinator nodes (ports 11000-11002)
+- 5 Worker nodes (ports 11003-11007)
+- 2 Schedulers (ports 11008-11009)
 - 1 Logger (port 11100)
+
+The script automatically:
+- Builds and installs all components
+- Creates necessary data directories under `$MR_PATH`
+- Copies the MapReduce template to each worker's sources directory
 
 ### Stopping the Cluster
 
 ```bash
 ./kill.sh
+```
+
+### Example Workflow
+
+```bash
+# 1. Set up environment
+export MR_PATH=~/.mapreduce
+export MR_HOSTS=http://localhost:11000,http://localhost:11001,http://localhost:11002
+export PATH=$PATH:$(go env GOPATH)/bin
+
+# 2. Start cluster
+cd run && ./run.sh 0
+cd ..
+
+# 3. Write some data
+echo -e "hello world\nfoo bar\nbaz bzzz" | client write -path /test/input.txt
+
+# 4. Run word count
+client mapreduce \
+  -in /test/input.txt \
+  -out /test/output.txt \
+  -mappers 3 \
+  -reducers 2 \
+  -srcs ./operations/word_count/mruserlib
+
+# 5. Read results
+client read -path /test/output.txt
+
+# 6. Clean up
+client rm -path /test/input.txt
+client rm -path /test/output.txt
+
+# 7. Stop cluster
+cd run && ./kill.sh
 ```
 
 ## Usage
@@ -162,7 +207,7 @@ cat more_data.txt | client write -path /data/myfile.txt -append
 # Read file to stdout
 client read -path /data/myfile.txt
 
-# List files
+# List files with prefix
 client list -prefix /data/
 
 # Check if file exists
@@ -170,17 +215,17 @@ client exists -path /data/myfile.txt
 
 # Copy file
 client copy -src /data/myfile.txt -dst /backup/myfile.txt
-# Or use alias: client cp -src /data/myfile.txt -dst /backup/myfile.txt
+client cp -src /data/myfile.txt -dst /backup/myfile.txt  # alias
 
 # Move file
 client move -src /data/myfile.txt -dst /archive/myfile.txt
-# Or use alias: client mv -src /data/myfile.txt -dst /archive/myfile.txt
+client mv -src /data/myfile.txt -dst /archive/myfile.txt  # alias
 
 # Remove file
 client remove -path /data/myfile.txt
-# Or use alias: client rm -path /data/myfile.txt
+client rm -path /data/myfile.txt  # alias
 
-# Merge multiple files
+# Merge multiple files into one
 client merge -in /data/part1.txt,/data/part2.txt -out /data/merged.txt
 ```
 
@@ -192,17 +237,16 @@ client mapreduce \
   -out /data/output.txt \
   -mappers 5 \
   -reducers 3 \
-  -srcs /path/to/operations/word_count/mruserlib
-
-# Run in detached mode (returns immediately)
-client mapreduce \
-  -in /data/input.txt \
-  -out /data/output.txt \
-  -mappers 5 \
-  -reducers 3 \
-  -srcs /path/to/operations/word_count/mruserlib \
-  -detached
+  -srcs ./operations/word_count/mruserlib
 ```
+
+**Parameters:**
+- `-in`: Input file path(s), comma-separated for multiple files
+- `-out`: Output file path
+- `-mappers`: Maximum number of concurrent map tasks
+- `-reducers`: Number of reduce tasks (determines output partitioning)
+- `-srcs`: Path to the `mruserlib` directory containing your Map/Reduce code
+- `-detached`: Optional flag to run job in background
 
 ## Writing Custom MapReduce Operations
 
@@ -211,6 +255,8 @@ Create a new directory under `operations/` with a `mruserlib` subdirectory conta
 ```go
 package mruserlib
 
+import "hash/fnv"
+
 // Entry represents a key-value pair emitted by Map
 type Entry struct {
     Key, Value string
@@ -218,11 +264,10 @@ type Entry struct {
 
 // Map processes input records and emits key-value pairs
 // in: channel of input lines (one per record)
-// out: channel to emit Entry pairs
+// out: channel to emit Entry pairs (must close when done)
 func Map(in <-chan string, out chan<- Entry) {
     for record := range in {
-        // Process each record
-        // Emit key-value pairs:
+        // Process each record and emit key-value pairs
         out <- Entry{Key: "mykey", Value: "myvalue"}
     }
     close(out)
@@ -231,16 +276,15 @@ func Map(in <-chan string, out chan<- Entry) {
 // Partition determines which reducer handles a key
 // Must return a value in range [0, reducers)
 func Partition(key string, reducers int) int {
-    // Hash-based partitioning example
     h := fnv.New32a()
     h.Write([]byte(key))
     return int(h.Sum32()) % reducers
 }
 
-// Reduce aggregates values for a key
+// Reduce aggregates all values for a given key
 // key: the key being reduced
 // in: channel of values for this key
-// out: channel to emit final output lines
+// out: channel to emit output lines (must close when done)
 func Reduce(key string, in <-chan string, out chan<- string) {
     var result string
     for value := range in {
@@ -265,7 +309,7 @@ client mapreduce -in /input.txt -out /wordcount.txt -mappers 3 -reducers 2 \
 #### Inverted Index (`operations/inverted_index/mruserlib`)
 Builds an inverted index mapping words to document titles.
 
-Input format: `document_title\ttext content`
+Input format: `document_title<TAB>text content`
 
 ```bash
 client mapreduce -in /documents.txt -out /index.txt -mappers 3 -reducers 2 \
@@ -273,103 +317,86 @@ client mapreduce -in /documents.txt -out /index.txt -mappers 3 -reducers 2 \
 ```
 
 #### Shuffle Merge (`operations/shuffle_merge/mruserlib`)
-Shuffles and merges key-value pairs.
+Shuffles and merges key-value pairs by key.
 
 ## Configuration
 
-### Coordinator Configuration
+### Coordinator
 
-```bash
-coordinator start \
-  -name coordinator1 \
-  -port 11000 \
-  -env dev \
-  -workers http://localhost:11001,http://localhost:11002 \
-  -coordinators http://localhost:11000,http://localhost:11010 \
-  -schedulers http://localhost:11006 \
-  -logger http://localhost:11100 \
-  -override  # Override existing config
+```
+coordinator start [flags]
 ```
 
-### Worker Configuration
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-name` | Name for coordinator machine and its folder | `coordinator` |
+| `-port` | Port for running coordinator on | `11000` |
+| `-env` | `dev` (local development) or `prod` (production) | `dev` |
+| `-coordinators` | Comma separated coordinator IP addresses | |
+| `-workers` | Comma separated worker IP addresses | |
+| `-schedulers` | Comma separated scheduler IP addresses | |
+| `-logger` | Logger IP address | |
+| `-override` | Override config.json | `false` |
 
-```bash
-worker start \
-  -name worker1 \
-  -port 11001 \
-  -env dev \
-  -coordinator http://localhost:11000 \
-  -logger http://localhost:11100 \
-  -override
+### Worker
+
+```
+worker start [flags]
 ```
 
-### Scheduler Configuration
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-name` | Name for worker machine and its folder | `worker` |
+| `-port` | Port for running worker on | `11001` |
+| `-env` | `dev` (local development) or `prod` (production) | `dev` |
+| `-coordinator` | Coordinator IP address | |
+| `-logger` | Logger IP address | |
+| `-scheduler` | Start worker in scheduler mode | `false` |
+| `-override` | Override config.json | `false` |
 
-```bash
-worker start \
-  -name scheduler1 \
-  -port 11006 \
-  -env dev \
-  -coordinator http://localhost:11000 \
-  -logger http://localhost:11100 \
-  -scheduler  # Enable scheduler mode
-  -override
+### Simple Logger
+
+```
+simple_logger start [flags]
 ```
 
-### System Parameters (MrConfig)
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-name` | Name for logger machine and its folder | `logger` |
+| `-port` | Port for running logger on | `11100` |
+| `-env` | `dev` (local development) or `prod` (production) | `dev` |
+| `-output` | Path for logger output file | `log` |
+| `-override` | Override config.json | `false` |
 
-The system uses these configurable parameters:
+### Client Commands
+
+**Environment Variables:**
+- `MR_HOSTS` - Comma-separated coordinator addresses (required)
+- `MR_CLIENT` - Client identifier for logging (optional)
+
+**Commands:**
+
+| Command | Flags | Description |
+|---------|-------|-------------|
+| `write` | `-path`, `-append` | Write stdin to path |
+| `read` | `-path` | Read path to stdout |
+| `exists` | `-path` | Check if path exists |
+| `list` | `-prefix` | List files with prefix |
+| `remove` / `rm` | `-path` | Remove file |
+| `copy` / `cp` | `-src`, `-dst` | Copy file |
+| `move` / `mv` | `-src`, `-dst` | Move file |
+| `merge` | `-in`, `-out` | Merge files (comma-separated input) |
+| `mapreduce` | `-in`, `-out`, `-mappers`, `-reducers`, `-srcs`, `-detached` | Run MapReduce job |
+
+### System Parameters
+
+The coordinator defines these system-wide parameters (hardcoded):
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `MaxRowLength` | Maximum length of a single row | Configured on coordinator |
-| `BlockSize` | Target size for data blocks (bytes) | Configured on coordinator |
-| `ReplicationFactor` | Number of block replicas | Configured on coordinator |
-
-## API Endpoints
-
-### Coordinator Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /IsAlive` | Check coordinator status (active/passive) |
-| `GET /GetMrConfig` | Get system configuration |
-| `GET /GetAvailableWorkers` | Get list of available worker nodes |
-| `POST /GetAvailableReducers` | Get reducer nodes for MapReduce |
-| `POST /GetAvailableScheduler` | Get an available scheduler |
-| `POST /Transaction/Start` | Start a new transaction |
-| `POST /Transaction/Update` | Ping/update transaction |
-| `POST /Transaction/Close` | Close transaction |
-| `POST /File/Write` | Register file with blocks |
-| `POST /File/Read` | Get block info for file |
-| `POST /File/Remove` | Remove a file |
-| `POST /File/Merge` | Merge multiple files |
-| `GET /File/List` | List files by prefix |
-| `GET /File/IsExists` | Check if file exists |
-
-### Worker Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /IsAlive` | Health check |
-| `POST /Block/Write` | Write block data |
-| `POST /Block/Read` | Read block data |
-| `POST /Block/Copy` | Replicate block |
-| `POST /Block/Remove` | Remove block |
-| `POST /Block/Check` | Check block existence |
-| `POST /Block/Validate` | Validate block integrity |
-| `POST /Operation/Map` | Execute map operation |
-| `POST /Operation/Reduce` | Execute reduce operation |
-| `POST /Source/Write` | Upload user code |
-| `POST /Source/Build` | Build user code |
-
-### Scheduler Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `POST /Operation/PrepareMapReduce` | Prepare MapReduce job |
-| `POST /Operation/StartMapReduce` | Start MapReduce execution |
-| `POST /Operation/GetStatus` | Get job status |
+| `MaxRowLength` | Maximum length of a single row | 256 KB |
+| `BlockSize` | Target size for data blocks | 4 MB |
+| `ReplicationFactor` | Number of block replicas | 3 |
 
 ## Fault Tolerance
 
@@ -379,7 +406,7 @@ The system uses these configurable parameters:
 - Automatic leader election on active coordinator failure
 
 ### Block Replication
-- Configurable replication factor
+- Configurable replication factor (default: 3)
 - Automatic re-replication when workers fail
 - Background monitoring of block health
 
@@ -392,9 +419,9 @@ The system uses these configurable parameters:
 
 The visualizer provides real-time visualization of cluster activity:
 
-1. Start the cluster with logging enabled
+1. Start the cluster with logging: `./run.sh 0`
 2. Open `visualizer/index.html` in a browser
-3. Load the request log file (`requests.log`)
+3. Load the request log file (found at `$MR_PATH/logger/requests.log`)
 4. Click "Start" to begin visualization
 
 Features:
@@ -411,15 +438,15 @@ mapreduce/
 │   ├── client.go     # Main entry point
 │   └── commands/     # Command implementations
 ├── coordinator/      # Coordinator node
-│   ├── coordinator.go # Main entry point
+│   ├── coordinator.go
 │   └── server/       # HTTP handlers and core logic
 │       └── dbase/    # BoltDB wrapper and journaling
 ├── worker/           # Worker node
-│   ├── worker.go     # Main entry point
+│   ├── worker.go
 │   └── server/       # HTTP handlers and operations
 ├── common/           # Shared utilities
 │   ├── fsutil/       # File system utilities
-│   ├── httputil/     # HTTP helpers
+│   ├── httputil/     # HTTP client helpers
 │   ├── responses/    # API response types
 │   └── wrrors/       # Error wrapping
 ├── operations/       # Example MapReduce operations
@@ -427,17 +454,14 @@ mapreduce/
 │   ├── inverted_index/
 │   └── shuffle_merge/
 ├── template/         # MapReduce job template
-│   └── main/         # Job executor (do_map, do_reduce)
+│   ├── build.sh      # Build script for user code
+│   └── main/         # Job executor
 ├── simple_logger/    # Request logging service
 ├── visualizer/       # Web-based visualization
 └── run/              # Scripts for local development
+    ├── run.sh        # Start local cluster
+    └── kill.sh       # Stop all processes
 ```
-
-## Adding New Operations
-
-1. Create `operations/my_operation/mruserlib/lib.go`
-2. Implement `Map`, `Partition`, and `Reduce` functions
-3. Use with: `client mapreduce -srcs ./operations/my_operation/mruserlib`
 
 ## License
 

@@ -1,4 +1,14 @@
-rm /Users/therion/.mapreduce/logger/requests.log
+#!/usr/bin/env bash
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Clean up logger requests log if it exists
+if [[ -n "$MR_PATH" ]]; then
+    rm -f "$MR_PATH/logger/requests.log"
+fi
+
 simple_logger start &
 
 coordinator start -name coordinator1 &
@@ -27,20 +37,18 @@ s5=$!
 
 sleep 2
 
-
 MR_CLIENT="client1"; client read -path long_file | client write -path long_file1 &
 MR_CLIENT="client1"; client read -path long_file | client write -path long_file2 &
-MR_CLIENT="client2"; client mapreduce -in long_file -out long_file_count1 -mappers 5 -reducers 3 -srcs ~/go/src/github.com/Croohand/mapreduce/operations/word_count/mruserlib
+MR_CLIENT="client2"; client mapreduce -in long_file -out long_file_count1 -mappers 5 -reducers 3 -srcs "$PROJECT_DIR/operations/word_count/mruserlib"
 sleep 2
 kill $s3
 kill $s4
 sleep 1
-MR_CLIENT="client3"; client mapreduce -in long_file -out long_file_count2 -mappers 3 -reducers 3 -srcs ~/go/src/github.com/Croohand/mapreduce/operations/word_count/mruserlib
+MR_CLIENT="client3"; client mapreduce -in long_file -out long_file_count2 -mappers 3 -reducers 3 -srcs "$PROJECT_DIR/operations/word_count/mruserlib"
 sleep 2
 kill $m1
 sleep 5
 MR_CLIENT="client1"; client read -path long_file | client write -path nlong_file
-
 
 sleep 2
 

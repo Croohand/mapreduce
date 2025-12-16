@@ -22,6 +22,9 @@ func Map(in <-chan string, out chan<- Entry) {
 	index := map[string]map[string]bool{}
 	for rec := range in {
 		toks := strings.SplitN(rec, "\t", 2)
+		if len(toks) < 2 {
+			continue // skip lines without tab separator
+		}
 		title, text := toks[0], toks[1]
 		words := strings.Split(text, " ")
 		for _, word := range words {
