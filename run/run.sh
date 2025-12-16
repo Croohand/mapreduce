@@ -42,7 +42,7 @@ SCHEDULERS=$(get_schedulers)
 SCHEDULERS=${SCHEDULERS:1}
 
 SUCCESS=0
-go install -i ../client && go install -i ../master && go install -i ../slave && go install -i ../simple_logger && SUCCESS=1
+go install ../client && go install ../master && go install ../slave && go install ../simple_logger && SUCCESS=1
 if [[ $SUCCESS == 1 ]]
 then
     simple_logger start -name "logger" -port 11100 -output "requests.log" -override &
